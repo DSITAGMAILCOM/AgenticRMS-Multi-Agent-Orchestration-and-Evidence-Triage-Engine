@@ -15,6 +15,10 @@ def ensure_rms_columns():
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='helpdesk_tickets'")
+        if not cursor.fetchone():
+            conn.close()
+            return
         cursor.execute("PRAGMA table_info(helpdesk_tickets)")
         columns = [col[1] for col in cursor.fetchall()]
 

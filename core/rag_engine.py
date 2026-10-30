@@ -22,8 +22,6 @@ try:
 except ImportError:
     pdfplumber = None
 
-from sentence_transformers import SentenceTransformer
-
 class RAGEngine:
     def __init__(
         self,
@@ -38,6 +36,7 @@ class RAGEngine:
         os.makedirs(self.cache_dir, exist_ok=True)
 
         try:
+            from sentence_transformers import SentenceTransformer
             self.model = SentenceTransformer(embedding_model_name)
             self.dimension = self.model.get_sentence_embedding_dimension()
         except Exception as e:

@@ -155,7 +155,3 @@ class DepartmentVectorStore:
             return "\n\n---\n\n".join(passages)
         except Exception as e:
             return f"Vector search error in {self.dept_name}: {e}"
-
-
-# Re-export RAGEngine for backwards compatibility
-from core.rag_engine import RAGEngine

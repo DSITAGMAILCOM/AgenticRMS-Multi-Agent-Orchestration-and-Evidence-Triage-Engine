@@ -10,6 +10,21 @@ DB_PATH = os.path.join(BASE_DIR, "university.db")
 ADMIN_DB_PATH = os.path.join(BASE_DIR, "admin.db")
 ENV_PATH = os.path.join(BASE_DIR, ".env")
 
+# Auto-initialize databases on fresh deployment (e.g. Render / Cloud)
+if not os.path.exists(DB_PATH):
+    try:
+        from database_setup import init_db
+        init_db()
+    except Exception:
+        pass
+
+if not os.path.exists(ADMIN_DB_PATH):
+    try:
+        from core.admin_db import init_admin_database
+        init_admin_database()
+    except Exception:
+        pass
+
 load_dotenv(dotenv_path=ENV_PATH, override=True)
 
 console = Console()

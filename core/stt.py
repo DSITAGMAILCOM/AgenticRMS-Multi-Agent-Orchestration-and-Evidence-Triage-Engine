@@ -29,26 +29,20 @@ try:
 except Exception:
     pass
 
-# First run: pip install faster-whisper
-try:
-    from faster_whisper import WhisperModel
-    WHISPER_INSTALLED = True
-except ImportError:
-    WhisperModel = None
-    WHISPER_INSTALLED = False
-
 # Options: "tiny", "base", "small", "medium", "large-v3"
-model_size = "base"
+model_size = "tiny"
 _cached_model = None
 
 
 def get_whisper_instance():
-    """Initializes or returns cached WhisperModel on CPU with int8 quantization."""
+    """Initializes or returns cached WhisperModel on CPU with int8 quantization (lazy-loaded)."""
     global _cached_model
-    if not WHISPER_INSTALLED:
-        return None
     if _cached_model is None:
-        _cached_model = WhisperModel(model_size, device="cpu", compute_type="int8")
+        try:
+            from faster_whisper import WhisperModel
+            _cached_model = WhisperModel(model_size, device="cpu", compute_type="int8")
+        except Exception as e:
+            return None
     return _cached_model
 
 
