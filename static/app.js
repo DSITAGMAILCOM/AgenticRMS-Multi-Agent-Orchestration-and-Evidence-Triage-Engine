@@ -12,6 +12,8 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  const API_BASE = (window.BACKEND_API_URL || localStorage.getItem('backend_api_url') || '').replace(/\/$/, '');
+
   // Application State
   const state = {
     isAuthenticated: false,
@@ -191,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function authenticateStudent(regNo, displayErrorInModal = true) {
     try {
-      const res = await fetch('/api/login', {
+      const res = await fetch(`${API_BASE}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ registration_no: regNo })
@@ -316,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadTickets() {
     if (!state.currentStudent.registration_no) return;
     try {
-      const res = await fetch(`/api/tickets?reg_no=${encodeURIComponent(state.currentStudent.registration_no)}`);
+      const res = await fetch(`${API_BASE}/api/tickets?reg_no=${encodeURIComponent(state.currentStudent.registration_no)}`);
       if (res.ok) {
         const data = await res.json();
         state.tickets = data.tickets || [];
@@ -522,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollChatToBottom();
 
     try {
-      const response = await fetch('/api/query', {
+      const response = await fetch(`${API_BASE}/api/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -810,7 +812,7 @@ document.addEventListener('DOMContentLoaded', () => {
           formData.append('audio', audioBlob, 'query_audio.wav');
 
           try {
-            const res = await fetch('/api/transcribe', {
+            const res = await fetch(`${API_BASE}/api/transcribe`, {
               method: 'POST',
               body: formData
             });
@@ -1369,7 +1371,7 @@ document.addEventListener('DOMContentLoaded', () => {
       submitFeedbackBtn.innerHTML = '<span>Submitting...</span>';
 
       try {
-        const resp = await fetch('/api/feedback', {
+        const resp = await fetch(`${API_BASE}/api/feedback`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -1283,8 +1283,10 @@
   <!-- Toast Notification Container -->
   <div id="adminToast" class="toast-msg hidden"></div>
 
+  <script src="/static/config.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      const API_BASE = (window.BACKEND_API_URL || localStorage.getItem('backend_api_url') || '').replace(/\/$/, '');
       const state = {
         adminToken: sessionStorage.getItem('rms_admin_token') || '',
         admin: null,
@@ -1364,7 +1366,7 @@
         }
 
         try {
-          const res = await fetch('/api/admin/session', {
+          const res = await fetch(`${API_BASE}/api/admin/session`, {
             headers: { 'Authorization': `Bearer ${state.adminToken}` }
           });
           const data = await res.json();
@@ -1442,7 +1444,7 @@
         loginBtn.textContent = 'Verifying Credentials in admin.db...';
 
         try {
-          const res = await fetch('/api/admin/login', {
+          const res = await fetch(`${API_BASE}/api/admin/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1475,7 +1477,7 @@
       // 3. Logout
       adminLogoutBtn.addEventListener('click', async () => {
         try {
-          await fetch('/api/admin/logout', {
+          await fetch(`${API_BASE}/api/admin/logout`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${state.adminToken}` }
           });
@@ -1490,7 +1492,7 @@
       // 4. Load Tickets from university.db
       async function loadTickets(silent = false) {
         try {
-          const res = await fetch('/api/admin/tickets', {
+          const res = await fetch(`${API_BASE}/api/admin/tickets`, {
             headers: { 'Authorization': `Bearer ${state.adminToken}` }
           });
           const data = await res.json();
@@ -1634,7 +1636,7 @@
         };
 
         try {
-          const res = await fetch('/api/admin/ticket/update', {
+          const res = await fetch(`${API_BASE}/api/admin/ticket/update`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1695,7 +1697,7 @@
       async function loadFeedback(silent = false) {
         try {
           const headers = state.adminToken ? { 'Authorization': `Bearer ${state.adminToken}` } : {};
-          const res = await fetch('/api/admin/feedback', { headers });
+          const res = await fetch(`${API_BASE}/api/admin/feedback`, { headers });
           const data = await res.json();
           if (res.ok && data.success && Array.isArray(data.feedback)) {
             state.feedback = data.feedback;
@@ -1850,7 +1852,7 @@
 
       async function loadQueriesLogs() {
         try {
-          const res = await fetch('/api/admin/student-queries', {
+          const res = await fetch(`${API_BASE}/api/admin/student-queries`, {
             headers: { 'Authorization': `Bearer ${state.adminToken}` }
           });
           const data = await res.json();
@@ -1876,7 +1878,7 @@
 
       async function loadAuditLogs() {
         try {
-          const res = await fetch('/api/admin/audit-logs', {
+          const res = await fetch(`${API_BASE}/api/admin/audit-logs`, {
             headers: { 'Authorization': `Bearer ${state.adminToken}` }
           });
           const data = await res.json();
@@ -1976,7 +1978,7 @@
               formData.append('audio', audioBlob, 'speech.wav');
 
               try {
-                const res = await fetch('/api/transcribe', {
+                const res = await fetch(`${API_BASE}/api/transcribe`, {
                   method: 'POST',
                   body: formData
                 });

@@ -47,6 +47,23 @@ os.makedirs(STATIC_DIR, exist_ok=True)
 STUDENT_TOKEN_SECRET = os.getenv("STUDENT_TOKEN_SECRET", "univ_student_secure_token_secret_2026")
 
 
+def ensure_databases():
+    """Guarantees university.db and admin.db exist with seed data on fresh deployment (Render/Cloud)."""
+    if not os.path.exists(DB_PATH):
+        try:
+            from database_setup import init_db
+            init_db()
+            console.print("[bold green]✅ Auto-seeded university.db on fresh cloud start.[/bold green]")
+        except Exception as e:
+            console.print(f"[dim red]Auto-seed database note: {e}[/dim red]")
+    try:
+        from core.admin_db import init_admin_database
+        init_admin_database()
+    except Exception as e:
+        console.print(f"[dim red]Admin database init note: {e}[/dim red]")
+    ensure_feedback_table()
+
+
 def ensure_feedback_table():
     """Guarantees student_feedback table exists with indexes in university.db."""
     try:
@@ -75,7 +92,7 @@ def ensure_feedback_table():
         console.print(f"[dim red]Feedback table note: {e}[/dim red]")
 
 
-ensure_feedback_table()
+ensure_databases()
 
 
 
@@ -886,11 +903,19 @@ routes = [
 
 
 middleware = [
-    Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+    Middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+        allow_origin_regex=r"https?://.*"
+    )
 ]
 
 app = Starlette(routes=routes, middleware=middleware)
 
 if __name__ == "__main__":
-    console.print("[bold spring_green3]🚀 Launching RMS Query & Admin Server at http://localhost:8000[/bold spring_green3]")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("HOST", "0.0.0.0")
+    console.print(f"[bold spring_green3]🚀 Launching RMS Query & Admin Server at http://{host}:{port}[/bold spring_green3]")
+    uvicorn.run(app, host=host, port=port)

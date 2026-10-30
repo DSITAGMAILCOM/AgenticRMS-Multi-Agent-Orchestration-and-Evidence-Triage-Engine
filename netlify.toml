@@ -1,0 +1,23 @@
+[build]
+  publish = "static"
+
+# Rewrite /admin to /admin.html
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+# Rewrite /static/* asset paths for complete relative and absolute path compatibility
+[[redirects]]
+  from = "/static/*"
+  to = "/:splat"
+  status = 200
+
+# Optional Netlify API Proxy to Render Backend:
+# Once your Render backend is live, uncomment the redirect below and replace with your Render URL.
+# This eliminates CORS issues and keeps all API calls on the same origin!
+# [[redirects]]
+#   from = "/api/*"
+#   to = "https://your-backend.onrender.com/api/:splat"
+#   status = 200
+#   force = true
