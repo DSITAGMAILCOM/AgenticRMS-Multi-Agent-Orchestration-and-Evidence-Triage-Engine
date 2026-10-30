@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RMS Query — Intelligent University Assistant</title>
+  <meta name="description" content="University Multi-Agent RAG Support Portal. Instant answers for fees, exams, academic curriculum, internships, and campus logistics.">
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/static/style.css?v=2">
+</head>
+<body>
+  <!-- Fixed Full-Bleed Campus Background -->
+  <div class="campus-bg-layer" aria-hidden="true"></div>
+  <div class="campus-overlay" aria-hidden="true"></div>
+
+  <!-- Primary Application Wrapper -->
+  <div class="app-layout">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <!-- Brand Header -->
+      <div class="sidebar-header">
+        <div class="brand-logo" id="brandLogo">
+          <svg class="leaf-sprout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22v-8m0 0a5 5 0 0 1 5-5h2a5 5 0 0 1-5 5h-2zm0 0a5 5 0 0 0-5-5H5a5 5 0 0 0 5 5h2z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="brand-text">RMS Query</span>
+        </div>
+        <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Close sidebar (Slide to collapse)" aria-label="Close sidebar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+            <polyline points="15 9 12 12 15 15"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Action Button: + New conversation -->
+      <button class="new-conversation-btn" id="newChatBtn" aria-label="Start a new conversation">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>New conversation</span>
+      </button>
+
+      <!-- Navigation Menu (Chat, Track RMS, History) -->
+      <div class="sidebar-nav-group">
+        <button class="sidebar-nav-item active" id="navChatBtn" data-view="chat">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span class="nav-label">RMS Assistant</span>
+        </button>
+
+        <button class="sidebar-nav-item" id="navTrackBtn" data-view="track">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span class="nav-label">Track Your RMS</span>
+          <span class="ticket-badge orange-badge" id="activeRmsBadge">0 Active</span>
+        </button>
+
+        <button class="sidebar-nav-item" id="navHistoryBtn" data-view="history">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span class="nav-label">RMS History</span>
+          <span class="ticket-badge" id="historyRmsBadge">0 Total</span>
+        </button>
+
+        <button type="button" class="sidebar-nav-item" id="sidebarFeedbackBtn" title="Give Student Feedback" aria-label="Give Student Feedback" style="margin-top: 4px;">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span class="nav-label">Give Feedback</span>
+          <span class="ticket-badge" style="background: rgba(245, 158, 11, 0.2); color:#fbbf24; border:1px solid rgba(245, 158, 11, 0.35);">⭐ Share</span>
+        </button>
+
+        <a href="/admin" target="_blank" class="sidebar-nav-item" style="text-decoration:none; margin-top: 4px;">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span class="nav-label">Admin Portal</span>
+          <span class="ticket-badge" style="background: rgba(59,130,246,0.2); color:#60a5fa; border:1px solid rgba(59,130,246,0.35);">admin.db</span>
+        </a>
+      </div>
+
+      <!-- Conversation History Navigation -->
+      <nav class="history-scroll-container" aria-label="Conversation History">
+        
+        <div class="history-section">
+          <div class="history-section-title">Today</div>
+          <div class="history-item" data-query="What is my University id and registration profile?">
+            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span class="history-label">What is my University id ?</span>
+          </div>
+          <div class="history-item" data-query="What are the university holiday dates and festival breaks?">
+            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span class="history-label">When I can plan my Holiday for Diwali ?</span>
+          </div>
+        </div>
+
+        <div class="history-section">
+          <div class="history-section-title">Yesterday</div>
+          <div class="history-item" data-query="Show my exam datesheets and seating desk arrangement">
+            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span class="history-label">When is my Exam ?</span>
+          </div>
+          <div class="history-item" data-query="What is my current fee balance and hostel room?">
+            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span class="history-label">What is my current fee ?</span>
+          </div>
+        </div>
+
+        <div class="history-section">
+          <div class="history-section-title">Previous 7 days</div>
+          <div class="history-item" data-query="What is the status of my internship file and NOC?">
+            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span class="history-label">Status of internship Benefits</span>
+          </div>
+          <div class="history-item" data-query="What is the minimum passing marks and grading scale if I got 85 marks?">
+            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span class="history-label">Grade if got 85 Marks ?</span>
+          </div>
+        </div>
+
+      </nav>
+
+      <!-- Sidebar Bottom Profile Space -->
+      <div class="sidebar-footer">
+        <div class="user-pill" id="userProfileBtn" title="Student Profile & Settings">
+          <div class="avatar-badge" id="userAvatar">AS</div>
+          <div class="user-meta">
+            <span class="user-name" id="userNameLabel">Personal space</span>
+            <span class="user-role" id="userRoleLabel">12204521</span>
+          </div>
+          <div class="user-actions">
+            <button class="logout-icon-btn" id="logoutBtn" title="Switch Student / Log Out" aria-label="Log out">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Glass Backdrop Overlay (Mobile Tap to Close) -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- MAIN INTERACTION AREA -->
+    <main class="main-content" id="mainContent">
+      
+      <!-- Top Floating Navigation -->
+      <header class="top-nav">
+        <button class="sidebar-slide-toggle" id="sidebarSlideToggle" title="Toggle sidebar (Slide open/close • Cmd+B)" aria-label="Toggle sidebar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+            <polyline points="13 9 16 12 13 15"></polyline>
+          </svg>
+          <span class="slide-toggle-label">Sidebar</span>
+        </button>
+
+        <!-- View Switcher Segmented Control -->
+        <div class="view-switcher-pill" id="viewSwitcher">
+          <button class="view-pill-btn active" data-view="chat">💬 Assistant</button>
+          <button class="view-pill-btn" data-view="track">📍 Track RMS</button>
+          <button class="view-pill-btn" data-view="history">📊 RMS History</button>
+          <button type="button" class="view-pill-btn feedback-nav-pill" id="navFeedbackBtn" title="Give Student Feedback" aria-label="Give Student Feedback">⭐ Give Feedback</button>
+          <a href="/admin" target="_blank" class="view-pill-btn" style="text-decoration:none; color: #93c5fd; display: inline-flex; align-items: center; gap: 4px;">🏛️ Admin Portal ↗</a>
+        </div>
+
+        <div class="agent-selector-pill" id="agentSelectorBtn" tabindex="0">
+          <span class="agent-title">Your Agent</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+          
+          <!-- Agent Switcher Popup Menu -->
+          <div class="agent-menu-dropdown hidden" id="agentMenu">
+            <div class="agent-menu-item active" data-agent="orchestrator">
+              <span class="icon">🧭</span>
+              <div>
+                <strong>Central Orchestrator</strong>
+                <p>Auto-routes with zero-cost FAQ deflection</p>
+              </div>
+            </div>
+            <div class="agent-menu-item" data-agent="administration">
+              <span class="icon">🏛️</span>
+              <div>
+                <strong>Administration & Fees</strong>
+                <p>Tuition, hostel ledgers, scholarships</p>
+              </div>
+            </div>
+            <div class="agent-menu-item" data-agent="academic">
+              <span class="icon">🎓</span>
+              <div>
+                <strong>Chief Academic Dean</strong>
+                <p>Curriculum, courses, instructors, mentors</p>
+              </div>
+            </div>
+            <div class="agent-menu-item" data-agent="examination">
+              <span class="icon">📝</span>
+              <div>
+                <strong>Controller of Examinations</strong>
+                <p>Datesheets, seating, hall tickets, grades</p>
+              </div>
+            </div>
+            <div class="agent-menu-item" data-agent="edu_revolution">
+              <span class="icon">💼</span>
+              <div>
+                <strong>Edu-Revolution & Career</strong>
+                <p>Internship approvals, NOC, weekly logs</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="privacy-badge">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Just for you</span>
+        </div>
+      </header>
+
+      <!-- Center Container: Hero or Active Chat Stream -->
+      <div class="center-stage" id="centerStage">
+        
+        <!-- VIEW 1: CHAT ASSISTANT (Hero + Stream) -->
+        <div class="view-panel" id="chatView">
+          <!-- INITIAL WELCOME HERO (Matches Image 1 exactly) -->
+          <section class="hero-container" id="heroContainer">
+            
+            <!-- Frosted Central Sprout Emblem -->
+            <div class="hero-emblem-wrapper">
+              <div class="hero-emblem">
+                <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22v-8m0 0a5 5 0 0 1 5-5h2a5 5 0 0 1-5 5h-2zm0 0a5 5 0 0 0-5-5H5a5 5 0 0 0 5 5h2z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Hero Headlines -->
+            <h1 class="hero-heading">We are ready to give answer to your Query</h1>
+            <p class="hero-subheading">A thought, a story, a new beginning. Let's see where it takes us.</p>
+
+            <!-- 3 Frosted Glass Suggestion Cards (Exact matches from Image 1) -->
+            <div class="suggestion-cards-grid">
+              
+              <!-- Card 1: Ask your Query -->
+              <div class="suggestion-card" data-prompt="What is my current fee balance and hostel room allotment?">
+                <div class="card-header-row">
+                  <div class="card-icon-circle">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="9" y1="18" x2="15" y2="18"></line>
+                      <line x1="10" y1="22" x2="14" y2="22"></line>
+                      <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                    </svg>
+                  </div>
+                  <div class="arrow-up-right">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="7" y1="17" x2="17" y2="7"></line>
+                      <polyline points="7 7 17 7 17 17"></polyline>
+                    </svg>
+                  </div>
+                </div>
+                <h2 class="card-title">Ask your Query</h2>
+                <p class="card-desc">Find a fresh perspective on something curious.</p>
+              </div>
+
+              <!-- Card 2: Give Feedback -->
+              <div class="suggestion-card feedback-trigger-card" id="openFeedbackCard" role="button" tabindex="0" aria-label="Open student feedback form">
+                <div class="card-header-row">
+                  <div class="card-icon-circle">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                  </div>
+                  <div class="arrow-up-right">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="7" y1="17" x2="17" y2="7"></line>
+                      <polyline points="7 7 17 7 17 17"></polyline>
+                    </svg>
+                  </div>
+                </div>
+                <h2 class="card-title">Give Feedback</h2>
+                <p class="card-desc">Rate your experience and share suggestions to improve campus services.</p>
+              </div>
+
+              <!-- Card 3: Track RMS Status -->
+              <div class="suggestion-card" id="cardTrackRms" role="button" tabindex="0" aria-label="Track your RMS requests and grievance status" data-prompt="What is the status of my active RMS tickets and grievances?">
+                <div class="card-header-row">
+                  <div class="card-icon-circle">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                  </div>
+                  <div class="arrow-up-right">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="7" y1="17" x2="17" y2="7"></line>
+                      <polyline points="7 7 17 7 17 17"></polyline>
+                    </svg>
+                  </div>
+                </div>
+                <h2 class="card-title">Track RMS Status</h2>
+                <p class="card-desc">Monitor live resolution progress and assigned officer stages.</p>
+              </div>
+
+            </div>
+
+          </section>
+
+          <!-- CHAT STREAM CONTAINER (Hidden until first query is dispatched) -->
+          <section class="chat-stream hidden" id="chatStream">
+            <div class="messages-list" id="messagesList"></div>
+          </section>
+        </div>
+
+        <!-- VIEW 2: TRACK YOUR RMS (Matches Screenshots 1 & 2 Left) -->
+        <div class="view-panel hidden" id="trackRmsView">
+          <div class="rms-panel-card">
+            
+            <!-- Header Bar -->
+            <div class="rms-panel-header">
+              <div class="rms-header-title-wrap">
+                <div class="rms-brand-badge-circle">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#df6d4d" stroke-width="2.2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="rms-main-title">Track Your RMS</h2>
+                  <p class="rms-main-subtitle">Stay informed with real-time updates on your request.</p>
+                </div>
+              </div>
+
+              <div class="rms-filter-bar">
+                <div class="rms-search-box">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input type="text" id="rmsSearchInput" placeholder="Search by RMS Number..." />
+                </div>
+                <select id="rmsStatusFilter" class="rms-select-filter">
+                  <option value="all">All Status</option>
+                  <option value="in progress">In Progress</option>
+                  <option value="resolved">Resolved</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Two-Column Grid -->
+            <div class="rms-track-grid">
+              
+              <!-- Left Column: Tickets List -->
+              <div class="rms-tickets-col" id="rmsTicketsList">
+                <!-- Dynamically injected via app.js -->
+              </div>
+
+              <!-- Right Column: Detail Stepper & Request Summary -->
+              <div class="rms-detail-col" id="rmsDetailPane">
+                
+                <!-- Active Ticket Header -->
+                <div class="rms-active-card-header">
+                  <div class="rms-active-card-title-wrap">
+                    <div class="rms-category-icon-disc" id="activeCategoryIcon">🛏️</div>
+                    <div>
+                      <span class="rms-active-id" id="activeRmsId">RMS #RMS2025004827</span>
+                      <h3 class="rms-active-subject" id="activeRmsSubject">Hostel Room Allotment</h3>
+                    </div>
+                  </div>
+                  <span class="rms-status-badge status-in-progress" id="activeRmsStatusBadge">In Progress</span>
+                </div>
+
+                <!-- Horizontal Stepper / Progress Timeline -->
+                <div class="rms-stepper-wrap">
+                  <div class="rms-stepper" id="rmsStepper">
+                    <!-- Populated in JS based on stage_progress -->
+                  </div>
+                </div>
+
+                <!-- Handled By & Expected Resolution Cards -->
+                <div class="rms-meta-cards-row">
+                  <div class="rms-meta-card">
+                    <span class="meta-card-label">Currently Handled By</span>
+                    <div class="meta-card-content">
+                      <div class="handler-avatar" id="handlerAvatar">👤</div>
+                      <div>
+                        <strong id="handlerName">Hostel Office</strong>
+                        <p id="handlerEmail">support@lpu.in</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="rms-meta-card">
+                    <span class="meta-card-label">Expected Resolution</span>
+                    <div class="meta-card-content">
+                      <div class="calendar-icon-disc">📅</div>
+                      <div>
+                        <strong id="expectedResolutionTime">In 2-3 Working Days</strong>
+                        <p>Standard SLA Window</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Notice Alert Banner -->
+                <div class="rms-notice-alert">
+                  <span class="info-icon">ℹ️</span>
+                  <span id="rmsNoticeText">You will receive an update via email and in your RMS dashboard.</span>
+                </div>
+
+                <!-- Request Summary Card (Matches Image 1) -->
+                <div class="request-summary-card" id="requestSummaryCard">
+                  <h4 class="request-summary-title">Request Summary</h4>
+                  
+                  <div class="resolution-time-row">
+                    <div class="clock-circle-icon">
+                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#ea580c" stroke-width="2.2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                    </div>
+                    <div class="resolution-time-text">
+                      <span class="est-label">Estimated Resolution Time</span>
+                      <strong class="est-value" id="summaryEstTime">2-3 Working Days</strong>
+                      <p class="est-sub">This is an approximate time and may vary based on the complexity of your issue.</p>
+                    </div>
+                  </div>
+
+                  <div class="route-to-section">
+                    <span class="route-to-label">Request will be routed to:</span>
+                    
+                    <div class="vertical-timeline" id="verticalTimeline">
+                      <!-- Stage 1 -->
+                      <div class="vt-stage vt-current">
+                        <div class="vt-dot-circle current"></div>
+                        <div class="vt-stage-content">
+                          <div class="vt-title-row">
+                            <strong class="vt-stage-name" id="vtCurrentStageName">Hostel Office</strong>
+                            <span class="vt-stage-badge">Today</span>
+                          </div>
+                          <span class="vt-stage-sub">Current Stage</span>
+                        </div>
+                      </div>
+                      <div class="vt-connector"></div>
+                      <!-- Stage 2 -->
+                      <div class="vt-stage vt-next">
+                        <div class="vt-dot-circle next"></div>
+                        <div class="vt-stage-content">
+                          <strong class="vt-stage-name" id="vtNextStageName">Dean (Hostel Affairs)</strong>
+                          <span class="vt-stage-sub">Next Stage</span>
+                        </div>
+                      </div>
+                      <div class="vt-connector"></div>
+                      <!-- Stage 3 -->
+                      <div class="vt-stage vt-final">
+                        <div class="vt-dot-circle final"></div>
+                        <div class="vt-stage-content">
+                          <strong class="vt-stage-name">Final Resolution</strong>
+                          <span class="vt-stage-sub">Expected</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- VIEW 3: RMS HISTORY DASHBOARD (Matches Screenshot 2 Right) -->
+        <div class="view-panel hidden" id="rmsHistoryView">
+          <div class="rms-panel-card">
+            
+            <!-- Header Bar -->
+            <div class="rms-panel-header">
+              <div class="rms-header-title-wrap">
+                <div class="rms-brand-badge-circle">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#df6d4d" stroke-width="2.2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="rms-main-title">RMS History</h2>
+                  <p class="rms-main-subtitle">View your past requests and their resolution status.</p>
+                </div>
+              </div>
+
+              <div class="rms-filter-bar">
+                <select id="historyPeriodFilter" class="rms-select-filter">
+                  <option value="6months">Last 6 Months</option>
+                  <option value="30days">Last 30 Days</option>
+                  <option value="all">All Time</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 4 Stat Metric Cards Row -->
+            <div class="history-metrics-grid">
+              <div class="metric-card">
+                <div class="metric-icon-circle orange">📄</div>
+                <div class="metric-details">
+                  <span class="metric-label">Total Requests</span>
+                  <strong class="metric-value" id="metricTotal">0</strong>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-icon-circle green">✓</div>
+                <div class="metric-details">
+                  <span class="metric-label">Resolved</span>
+                  <strong class="metric-value" id="metricResolved">0</strong>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-icon-circle purple">🕒</div>
+                <div class="metric-details">
+                  <span class="metric-label">In Progress</span>
+                  <strong class="metric-value" id="metricInProgress">0</strong>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-icon-circle blue">⏳</div>
+                <div class="metric-details">
+                  <span class="metric-label">Avg. Resolution Time</span>
+                  <strong class="metric-value" id="metricAvgTime">0 Days</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Requests Table Card -->
+            <div class="history-table-card">
+              <div class="history-table-header">
+                <h3>Recent Requests</h3>
+                <span class="view-all-link" id="historyViewAllBtn">View All →</span>
+              </div>
+
+              <div class="table-responsive-wrapper">
+                <table class="rms-history-table">
+                  <thead>
+                    <tr>
+                      <th>RMS No.</th>
+                      <th>Category</th>
+                      <th>Submitted On</th>
+                      <th>Status</th>
+                      <th>Resolved On</th>
+                    </tr>
+                  </thead>
+                  <tbody id="historyTableBody">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM INPUT DOCK (Exact match from Image 1) -->
+      <footer class="bottom-dock-wrapper">
+        <form class="input-dock-form" id="chatForm" autocomplete="off">
+          
+          <div class="dock-left-actions">
+            <button type="button" class="dock-attach-btn" id="attachBtn" title="Add a file or image (simulated)">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+              </svg>
+              <span class="attach-label">Add a file or image</span>
+            </button>
+          </div>
+
+          <div class="dock-input-field-wrap">
+            <input 
+              type="text" 
+              id="queryInput" 
+              class="dock-input" 
+              placeholder="Ask your query here..." 
+              required
+              aria-label="Query text"
+            />
+          </div>
+
+          <div class="dock-right-actions">
+            <!-- Speech-to-Text Button labeled "Mike" using Faster-Whisper CPU -->
+            <button type="button" class="dock-mike-btn" id="mikeBtn" title="Speech-to-Text (Faster-Whisper)" aria-label="Speech-to-Text Mike">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <span class="mike-label">Mike</span>
+            </button>
+
+            <!-- Terracotta Round Send Arrow Button -->
+            <button type="submit" class="dock-send-btn" id="sendBtn" title="Send Query" aria-label="Submit query">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+
+        </form>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <!-- HELP / TICKETS MODAL (Slide-over / overlay) -->
+  <dialog class="frosted-modal" id="ticketsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#c85438" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+          <h3>Your Helpdesk & Escalation Tickets</h3>
+        </div>
+        <button class="modal-close-btn" id="closeModalBtn" aria-label="Close Tickets Modal">✕</button>
+      </div>
+
+      <div class="modal-body" id="ticketsList">
+        <div class="loading-spinner-wrap">
+          <div class="spinner"></div>
+          <p>Fetching active tickets from university database...</p>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <span class="modal-note">Tickets are synchronized with university officers in real time.</span>
+        <button class="btn-secondary" id="refreshTicketsBtn">Refresh</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- MANDATORY STUDENT LOGIN GATE MODAL -->
+  <dialog class="frosted-modal login-modal" id="loginModal">
+    <div class="modal-card login-card">
+      <div class="login-header">
+        <div class="login-brand-icon">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#df6d4d" stroke-width="2.2">
+            <path d="M12 22v-8m0 0a5 5 0 0 1 5-5h2a5 5 0 0 1-5 5h-2zm0 0a5 5 0 0 0-5-5H5a5 5 0 0 0 5 5h2z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="login-title">RMS Portal Authentication</h2>
+        <p class="login-subtitle">Please enter your Student Registration Number to unlock the AI Assistant and your RMS Dashboard.</p>
+      </div>
+
+      <form class="login-form" id="loginForm" autocomplete="off">
+        <div class="login-input-group">
+          <label for="loginRegInput" class="login-label">Registration Number</label>
+          <div class="login-input-wrapper">
+            <svg class="login-field-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <input 
+              type="text" 
+              id="loginRegInput" 
+              class="login-input" 
+              placeholder="Enter Registration No. (e.g. 12204521)" 
+              required 
+              autofocus
+            />
+          </div>
+          <div class="login-error-msg hidden" id="loginErrorMsg"></div>
+        </div>
+
+        <!-- Quick Demo Student Chips for Easy Testing -->
+        <div class="quick-demo-accounts">
+          <span class="quick-chips-label">Available Student Accounts:</span>
+          <div class="chips-row">
+            <button type="button" class="demo-chip" data-reg="12204521">12204521 (Aditya - CSE)</button>
+            <button type="button" class="demo-chip" data-reg="12208934">12208934 (Priya - Mech)</button>
+            <button type="button" class="demo-chip" data-reg="12301142">12301142 (Rahul - Acc)</button>
+          </div>
+        </div>
+
+        <button type="submit" class="login-submit-btn" id="loginSubmitBtn">
+          <span>Verify & Access Portal</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </form>
+
+      <div class="login-footer-security">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span>Protected by University Access Control & Session Verification</span>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- FEEDBACK MODAL DIALOG (Multiple-Choice & Free-Text Fields) -->
+  <dialog class="feedback-modal" id="feedbackModal">
+    <div class="feedback-modal-backdrop" id="feedbackModalBackdrop"></div>
+    <div class="feedback-card">
+      <div class="feedback-modal-header">
+        <div class="feedback-title-wrap">
+          <div class="feedback-icon-badge">⭐</div>
+          <div>
+            <h2 class="feedback-title">Student Experience & Feedback</h2>
+            <p class="feedback-subtitle">Help improve campus services and the AI assistance portal.</p>
+          </div>
+        </div>
+        <button type="button" class="feedback-close-btn" id="closeFeedbackModalBtn" title="Close" aria-label="Close feedback form">✕</button>
+      </div>
+
+      <form id="feedbackForm" class="feedback-form" autocomplete="off">
+        <!-- Student Identity Context & Anonymous Option -->
+        <div class="feedback-student-row">
+          <div class="feedback-student-info">
+            <span class="feedback-info-label">Submitting As:</span>
+            <span class="feedback-info-val" id="feedbackStudentDisplay">Aditya Sharma (12204521)</span>
+          </div>
+          <label class="anonymous-toggle-wrap">
+            <input type="checkbox" id="feedbackAnonymousCheck" name="is_anonymous">
+            <span class="custom-checkbox"></span>
+            <span class="anonymous-label">Submit Anonymously</span>
+          </label>
+        </div>
+
+        <!-- Question 1 (Multiple Choice): Overall Rating -->
+        <div class="feedback-form-group">
+          <label class="feedback-field-label">
+            <span class="q-num">1</span> How would you rate your overall experience with the RMS Portal? <span class="required">*</span>
+          </label>
+          <div class="star-rating-container" id="starRatingContainer" role="radiogroup" aria-label="Rating out of 5 stars">
+            <button type="button" class="star-btn" data-value="1" title="1 Star - Poor" aria-label="1 Star">★</button>
+            <button type="button" class="star-btn" data-value="2" title="2 Stars - Fair" aria-label="2 Stars">★</button>
+            <button type="button" class="star-btn" data-value="3" title="3 Stars - Good" aria-label="3 Stars">★</button>
+            <button type="button" class="star-btn" data-value="4" title="4 Stars - Very Good" aria-label="4 Stars">★</button>
+            <button type="button" class="star-btn active" data-value="5" title="5 Stars - Excellent" aria-label="5 Stars">★</button>
+            <span class="star-rating-text" id="starRatingText">5.0 — Excellent</span>
+            <input type="hidden" id="feedbackRatingInput" name="rating" value="5">
+          </div>
+        </div>
+
+        <!-- Question 2 (Multiple Choice): Feedback Category -->
+        <div class="feedback-form-group">
+          <label class="feedback-field-label">
+            <span class="q-num">2</span> Which department or service is this feedback for? <span class="required">*</span>
+          </label>
+          <div class="pill-radio-grid" id="categoryPillGrid">
+            <label class="pill-radio-item">
+              <input type="radio" name="category" value="Hostel & Living Facilities" checked>
+              <span class="pill-radio-label">🏛️ Hostel & Living Facilities</span>
+            </label>
+            <label class="pill-radio-item">
+              <input type="radio" name="category" value="Academic Curriculum & Classes">
+              <span class="pill-radio-label">🎓 Academic Curriculum & Classes</span>
+            </label>
+            <label class="pill-radio-item">
+              <input type="radio" name="category" value="Fee & Administration">
+              <span class="pill-radio-label">💳 Fee & Administration</span>
+            </label>
+            <label class="pill-radio-item">
+              <input type="radio" name="category" value="Examination & Evaluation">
+              <span class="pill-radio-label">📝 Examination & Evaluation</span>
+            </label>
+            <label class="pill-radio-item">
+              <input type="radio" name="category" value="Career Services & Internship">
+              <span class="pill-radio-label">💼 Career Services & Internship</span>
+            </label>
+            <label class="pill-radio-item">
+              <input type="radio" name="category" value="Campus IT & Wi-Fi">
+              <span class="pill-radio-label">🌐 Campus IT & Wi-Fi</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 3 (Multiple Choice): Resolution & Response Quality -->
+        <div class="feedback-form-group">
+          <label class="feedback-field-label">
+            <span class="q-num">3</span> How was the resolution quality & clarity of the AI response? <span class="required">*</span>
+          </label>
+          <div class="choice-options-row">
+            <label class="choice-card-option">
+              <input type="radio" name="resolution_quality" value="Exceptional / Immediate" checked>
+              <span class="choice-card-content">
+                <strong>🌟 Exceptional</strong>
+                <small>Instant & point-to-point</small>
+              </span>
+            </label>
+            <label class="choice-card-option">
+              <input type="radio" name="resolution_quality" value="Satisfactory / Clear">
+              <span class="choice-card-content">
+                <strong>👍 Satisfactory</strong>
+                <small>Answered my core question</small>
+              </span>
+            </label>
+            <label class="choice-card-option">
+              <input type="radio" name="resolution_quality" value="Needs Improvement">
+              <span class="choice-card-content">
+                <strong>⚠️ Needs Work</strong>
+                <small>Partial or ambiguous</small>
+              </span>
+            </label>
+            <label class="choice-card-option">
+              <input type="radio" name="resolution_quality" value="Unsatisfactory">
+              <span class="choice-card-content">
+                <strong>❌ Unsatisfactory</strong>
+                <small>Required escalation</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 4 (Multiple Choice): Recommendation Likelihood -->
+        <div class="feedback-form-group">
+          <label class="feedback-field-label">
+            <span class="q-num">4</span> How likely are you to recommend the RMS Assistant to a fellow student? <span class="required">*</span>
+          </label>
+          <div class="horizontal-pill-row">
+            <label class="rec-pill">
+              <input type="radio" name="recommendation" value="Very Likely" checked>
+              <span>🟢 Very Likely</span>
+            </label>
+            <label class="rec-pill">
+              <input type="radio" name="recommendation" value="Likely">
+              <span>🟡 Likely</span>
+            </label>
+            <label class="rec-pill">
+              <input type="radio" name="recommendation" value="Neutral">
+              <span>⚪ Neutral</span>
+            </label>
+            <label class="rec-pill">
+              <input type="radio" name="recommendation" value="Unlikely">
+              <span>🔴 Unlikely</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 5 (Free-Text): What went well? -->
+        <div class="feedback-form-group">
+          <label for="feedbackLikesInput" class="feedback-field-label">
+            <span class="q-num">5</span> What worked well or impressed you? <span class="optional">(Optional)</span>
+          </label>
+          <input 
+            type="text" 
+            id="feedbackLikesInput" 
+            class="feedback-input" 
+            placeholder="e.g. Instant fee breakdown, accurate room number, quick voice dictation..."
+          >
+        </div>
+
+        <!-- Question 6 (Free-Text): Detailed Feedback & Suggestions -->
+        <div class="feedback-form-group">
+          <label for="feedbackCommentsInput" class="feedback-field-label">
+            <span class="q-num">6</span> Detailed Feedback & Suggestions for Improvement <span class="required">*</span>
+          </label>
+          <textarea 
+            id="feedbackCommentsInput" 
+            class="feedback-textarea" 
+            rows="3" 
+            placeholder="Please share specific suggestions, encountered issues, or additional services you would like to see..."
+            required
+          ></textarea>
+        </div>
+
+        <div class="feedback-form-actions">
+          <button type="button" class="btn-cancel-feedback" id="cancelFeedbackBtn">Cancel</button>
+          <button type="submit" class="btn-submit-feedback" id="submitFeedbackBtn">
+            <span>Submit Feedback</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Notification Toast -->
+  <div class="toast-notification hidden" id="toast"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

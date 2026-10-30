@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RMS Central Administration Portal — University Support Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #07090e;
+      --bg-card: rgba(16, 22, 34, 0.78);
+      --bg-card-hover: rgba(23, 31, 48, 0.92);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: #3b82f6;
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-purple: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --shadow-glass: 0 20px 45px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* =========================================================================
+       Full-Bleed Campus Background (Vibrant, Sunlit Daylight Mode)
+       ========================================================================= */
+    .campus-bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image: url('/static/images/admin_campus.jpg');
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      filter: brightness(1.22) contrast(1.06) saturate(1.25);
+      pointer-events: none;
+    }
+
+    .campus-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      /* Ultra-clear, luminous ambient scrim keeping the sunny courtyard and sky vivid while preserving UI contrast */
+      background: 
+        radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.12) 0%, rgba(15, 23, 42, 0.28) 55%, rgba(10, 14, 23, 0.52) 100%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(10, 14, 23, 0.46) 100%);
+      backdrop-filter: blur(1.2px);
+      -webkit-backdrop-filter: blur(1.2px);
+      pointer-events: none;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background-color: transparent;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Header */
+    header.admin-header {
+      background: rgba(10, 14, 23, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+
+    .brand-titles h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+
+    .brand-titles p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .portal-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      transition: all 0.2s ease;
+    }
+    .portal-link:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .admin-profile-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px 14px 4px 6px;
+      border-radius: 40px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .admin-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    .admin-info {
+      line-height: 1.2;
+    }
+    .admin-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .admin-role {
+      font-size: 11px;
+      color: #10b981;
+      font-weight: 500;
+    }
+
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.12);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      padding: 7px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-logout:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    /* Main Container */
+    main.admin-main {
+      flex: 1;
+      max-width: 1380px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Login View Overlay / Panel */
+    #loginView {
+      max-width: 460px;
+      width: 100%;
+      margin: 40px auto;
+      background: var(--bg-card);
+      backdrop-filter: blur(30px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 36px 32px;
+      box-shadow: var(--shadow-glass);
+      text-align: center;
+    }
+
+    .login-icon-box {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+    }
+
+    .login-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 26px;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 7px;
+    }
+
+    .form-control {
+      width: 100%;
+      background: rgba(10, 14, 23, 0.85);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #fff;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .form-control:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 13px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+      margin-top: 10px;
+    }
+    .btn-submit:hover {
+      background: linear-gradient(135deg, #1d4ed8, #1e40af);
+      transform: translateY(-1px);
+    }
+
+    .demo-accounts {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-subtle);
+      text-align: left;
+    }
+    .demo-accounts-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+    .demo-chips-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .demo-chip-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: left;
+    }
+    .demo-chip-btn:hover {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: rgba(59, 130, 246, 0.35);
+      color: #fff;
+    }
+
+    .error-alert {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    /* Dashboard View */
+    #dashboardView {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .kpi-info h3 {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .kpi-info .kpi-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+    }
+
+    .kpi-icon-disc {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .kpi-blue .kpi-icon-disc { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .kpi-amber .kpi-icon-disc { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .kpi-green .kpi-icon-disc { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .kpi-purple .kpi-icon-disc { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+
+    /* Control Bar & Filter Tabs */
+    .table-controls-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .filter-pills-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      border-radius: 30px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .filter-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .filter-btn.active {
+      background: var(--accent-blue);
+      color: #fff;
+      border-color: var(--accent-blue);
+      box-shadow: 0 2px 10px rgba(59, 130, 246, 0.35);
+    }
+
+    .search-filter-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      max-width: 480px;
+    }
+
+    .search-box {
+      flex: 1;
+      position: relative;
+    }
+    .search-box input {
+      width: 100%;
+      background: rgba(10, 14, 23, 0.85);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 8px 80px 8px 36px;
+      font-size: 13px;
+      color: #fff;
+      outline: none;
+    }
+    .search-box input:focus {
+      border-color: var(--border-focus);
+    }
+
+    /* Administrative Hero Glass Card */
+    .admin-hero-glass-card {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius-lg);
+      padding: 24px 30px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+    }
+    .admin-hero-content {
+      flex: 1;
+    }
+    .admin-hero-content h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin: 6px 0;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+    .admin-hero-content p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .admin-hero-status {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .campus-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(37, 99, 235, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .live-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .live-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulse 2s infinite;
+    }
+    .db-badge {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: monospace;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.85); }
+    }
+
+    /* Admin Speech-to-Text Button ("Mike" using Faster-Whisper CPU) */
+    .admin-mike-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 16px;
+      background: rgba(37, 99, 235, 0.22);
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      color: #60a5fa;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .admin-mike-btn:hover {
+      background: rgba(37, 99, 235, 0.4);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .search-box .admin-mike-btn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .search-box .admin-mike-btn:hover {
+      transform: translateY(-50%) scale(1.04);
+    }
+    .admin-mike-btn.recording {
+      background: #ef4444 !important;
+      border-color: #dc2626 !important;
+      color: #fff !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4) !important;
+      animation: pulseRecording 1s infinite alternate;
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    /* Tickets Table */
+    .table-container {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-glass);
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    table.data-table th {
+      background: rgba(10, 14, 23, 0.6);
+      padding: 14px 18px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    table.data-table td {
+      padding: 16px 18px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: middle;
+    }
+
+    table.data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-in-progress {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .status-resolved {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .status-open {
+      background: rgba(59, 130, 246, 0.15);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .stage-pill {
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 3px 8px;
+      color: var(--text-muted);
+    }
+
+    .btn-action-manage {
+      background: rgba(59, 130, 246, 0.12);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: var(--radius-md);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-action-manage:hover {
+      background: #3b82f6;
+      color: #fff;
+    }
+
+    /* Modal Styling */
+    dialog.admin-modal {
+      margin: auto;
+      max-width: 680px;
+      width: 90%;
+      background: #0d121f;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      padding: 0;
+      outline: none;
+    }
+    dialog.admin-modal::backdrop {
+      background: rgba(3, 5, 10, 0.85);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .modal-close-btn:hover { color: #fff; }
+
+    .modal-body {
+      padding: 24px;
+      max-height: 75vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-info-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .modal-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-secondary:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+
+    /* Audit Logs View */
+    .audit-table-wrap {
+      margin-top: 20px;
+    }
+
+    /* Student Feedback Table & Summary Banner */
+    .feedback-summary-banner {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      padding: 18px 24px;
+      background: rgba(245, 158, 11, 0.08);
+      border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .summary-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .summary-metric .metric-val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fbbf24;
+    }
+    .summary-metric .metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .rating-stars-gold {
+      color: #fbbf24;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+    .quality-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .quality-exceptional {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .quality-satisfactory {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+    }
+    .quality-needs-work {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+    .quality-unsatisfactory {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .badge-rec-very-likely {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .badge-rec-likely {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+    }
+    .badge-rec-neutral {
+      background: rgba(148, 163, 184, 0.2);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+    .badge-rec-unlikely {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .anon-pill {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      background: rgba(148, 163, 184, 0.15);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+    .category-pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .hidden { display: none !important; }
+
+    /* Toast Notification */
+    .toast-msg {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+      animation: slideIn 0.25s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fixed Full-Bleed Campus Background (Matching Student Interface) -->
+  <div class="campus-bg-layer" aria-hidden="true"></div>
+  <div class="campus-overlay" aria-hidden="true"></div>
+
+  <!-- Ambient Admin Header -->
+  <header class="admin-header">
+    <div class="brand-wrap">
+      <div class="brand-icon">🏛️</div>
+      <div class="brand-titles">
+        <h1>RMS Central Administration Portal</h1>
+        <p>Isolated Admin Database Engine • Security & Stage Control</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="/" class="portal-link">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+        Student Portal
+      </a>
+      <div id="adminProfileBox" class="admin-profile-pill hidden">
+        <div id="adminAvatar" class="admin-avatar">VM</div>
+        <div class="admin-info">
+          <div id="adminName" class="admin-name">Dr. Vikram Malhotra</div>
+          <div id="adminRole" class="admin-role">SuperAdmin</div>
+        </div>
+      </div>
+      <button id="adminLogoutBtn" class="btn-logout hidden">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="admin-main">
+
+    <!-- 1. Admin Login View -->
+    <section id="loginView">
+      <div class="login-icon-box">🛡️</div>
+      <h2 class="login-title">Administrator Sign In</h2>
+      <p class="login-subtitle">
+        Protected Administrative Workspace. Credentials and audit logs are strictly verified against the isolated <code>admin.db</code>.
+      </p>
+
+      <div id="loginAlert" class="error-alert hidden"></div>
+
+      <form id="adminLoginForm">
+        <div class="form-group">
+          <label class="form-label" for="adminUsername">Username or Admin Email</label>
+          <input type="text" id="adminUsername" class="form-control" placeholder="e.g. admin or officer_sharma" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="adminPassword">Master Password</label>
+          <input type="password" id="adminPassword" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" id="loginBtn" class="btn-submit">Authenticate Administrator</button>
+        <div style="display: flex; align-items: center; justify-content: center; margin-top: 10px;">
+          <button type="button" id="guestViewBtn" class="btn-guest-view" style="width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; color: #cbd5e1; font-weight: 500; font-size: 13px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span>👁️ Explore Portal as Guest / Observer</span>
+            <span style="font-size: 11px; opacity: 0.7;">(Read-only)</span>
+          </button>
+        </div>
+      </form>
+
+      <div class="demo-accounts">
+        <div class="demo-accounts-title">Pre-Seeded Administrator Accounts</div>
+        <div class="demo-chips-grid">
+          <button type="button" class="demo-chip-btn" data-user="admin" data-pass="Admin@RMS2026!">
+            <span><strong>admin</strong> (SuperAdmin — Dean of Student Affairs)</span>
+            <span>➔</span>
+          </button>
+          <button type="button" class="demo-chip-btn" data-user="officer_sharma" data-pass="Officer@RMS2026!">
+            <span><strong>officer_sharma</strong> (Support Officer — Hostel & Grievance)</span>
+            <span>➔</span>
+          </button>
+          <button type="button" class="demo-chip-btn" data-user="exam_controller" data-pass="Exam@RMS2026!">
+            <span><strong>exam_controller</strong> (Examination Officer)</span>
+            <span>➔</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Admin Dashboard View -->
+    <section id="dashboardView" class="hidden">
+
+      <!-- Admin Central Control Glass Banner -->
+      <div class="admin-hero-glass-card">
+        <div class="admin-hero-content">
+          <div class="campus-tag">🏛️ University Central Administration</div>
+          <h2>Administration & Grievance Control Room</h2>
+          <p>Live RMS data feeds, real-time query tracking, cross-database synchronization, and speech-to-text dictation.</p>
+        </div>
+        <div class="admin-hero-status">
+          <div class="live-status-pill">
+            <span class="live-pulse"></span> Live System Sync
+          </div>
+          <div class="db-badge">admin.db • university.db</div>
+        </div>
+      </div>
+
+      <!-- KPI Metrics -->
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-info">
+            <h3>Total Tickets</h3>
+            <div id="kpiTotal" class="kpi-value">0</div>
+          </div>
+          <div class="kpi-icon-disc">📋</div>
+        </div>
+        <div class="kpi-card kpi-amber">
+          <div class="kpi-info">
+            <h3>In Progress Queue</h3>
+            <div id="kpiInProgress" class="kpi-value">0</div>
+          </div>
+          <div class="kpi-icon-disc">⏳</div>
+        </div>
+        <div class="kpi-card kpi-green">
+          <div class="kpi-info">
+            <h3>Resolved Tickets</h3>
+            <div id="kpiResolved" class="kpi-value">0</div>
+          </div>
+          <div class="kpi-icon-disc">✅</div>
+        </div>
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-info">
+            <h3>Admin Audit Logs</h3>
+            <div id="kpiAuditCount" class="kpi-value">0</div>
+          </div>
+          <div class="kpi-icon-disc">🛡️</div>
+        </div>
+        <div class="kpi-card kpi-amber" id="kpiFeedbackCard" style="cursor: pointer;" title="View Student Feedback">
+          <div class="kpi-info">
+            <h3>Student Feedback</h3>
+            <div id="kpiFeedbackCount" class="kpi-value">0 ★</div>
+          </div>
+          <div class="kpi-icon-disc">⭐</div>
+        </div>
+      </div>
+
+      <!-- Table Filter Bar -->
+      <div class="table-controls-card">
+        <div class="filter-pills-wrap">
+          <button class="filter-btn active" data-filter="all">All Requests</button>
+          <button class="filter-btn" data-filter="in progress">Active Queue</button>
+          <button class="filter-btn" data-filter="resolved">Resolved</button>
+          <button class="filter-btn" data-filter="audit">Audit Trail (admin.db)</button>
+          <button class="filter-btn" data-filter="queries">Chatbot Queries (admin.db)</button>
+          <button class="filter-btn" data-filter="feedback" id="filterFeedbackBtn">⭐ Student Feedback</button>
+        </div>
+
+        <div class="search-filter-wrap">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="adminSearchInput" placeholder="Search by Ticket ID, Roll No, or Subject...">
+            <!-- Speech-to-Text "Mike" Button (Faster-Whisper CPU) -->
+            <button type="button" class="admin-mike-btn" id="adminMikeBtn" title="Speech-to-Text (Faster-Whisper)" aria-label="Speech-to-Text (Mike)">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <span>Mike</span>
+            </button>
+          </div>
+          <button id="refreshBtn" class="btn-secondary" title="Refresh Live Data">🔄 Refresh</button>
+        </div>
+      </div>
+
+      <!-- Tickets Table Container -->
+      <div id="ticketsTableContainer" class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Student Roll & Name</th>
+              <th>Category</th>
+              <th>Current Stage</th>
+              <th>Status</th>
+              <th>Assigned Desk</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                Loading tickets from database...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Audit Logs Container (Shown when Audit tab selected) -->
+      <div id="auditTableContainer" class="table-container hidden">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Log ID</th>
+              <th>Admin User</th>
+              <th>Action</th>
+              <th>Target Ticket</th>
+              <th>Details & Changes</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="auditTableBody">
+            <tr>
+              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                Loading audit trail from admin.db...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Chatbot Queries Container (Shown when Queries tab selected) -->
+      <div id="queriesTableContainer" class="table-container hidden">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Query ID</th>
+              <th>Student Roll & Name</th>
+              <th>University Email (student_name_four_digit_number@lpu.in)</th>
+              <th>User Query</th>
+              <th>Polite Comprehensive Response</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="queriesTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                Loading chatbot query records from admin.db...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Student Feedback Container (Shown when Feedback tab selected) -->
+      <div id="feedbackTableContainer" class="table-container hidden">
+        <div class="feedback-summary-banner">
+          <div class="summary-metric">
+            <span class="metric-val" id="fbAvgRating">0.0 ★</span>
+            <span class="metric-label">Average Satisfaction Rating</span>
+          </div>
+          <div class="summary-metric">
+            <span class="metric-val" id="fbTotalSubmissions">0</span>
+            <span class="metric-label">Total Verified Submissions</span>
+          </div>
+          <div class="summary-metric">
+            <span class="metric-val" id="fbNetPromoter">95%</span>
+            <span class="metric-label">Recommendation Score</span>
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Feedback ID</th>
+              <th>Date & Time</th>
+              <th>Student</th>
+              <th>Department / Category</th>
+              <th>Rating</th>
+              <th>Resolution Quality</th>
+              <th>Recommendation</th>
+              <th>Comments & Suggestions</th>
+            </tr>
+          </thead>
+          <tbody id="feedbackTableBody">
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                Loading student feedback from database...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Interactive Ticket Management Modal -->
+  <dialog id="manageTicketModal" class="admin-modal">
+    <div class="modal-header">
+      <h3 class="modal-title">⚙️ Update Request Stage & Resolution</h3>
+      <button type="button" class="modal-close-btn" id="closeModalBtn">&times;</button>
+    </div>
+    <form id="manageTicketForm">
+      <div class="modal-body">
+        <div class="modal-info-box">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <strong id="modalTicketId" style="color: #60a5fa; font-family: 'Outfit', sans-serif;">RMS2025004827</strong>
+            <span id="modalStudentRoll" style="color: var(--text-muted);">Roll: 12204521</span>
+          </div>
+          <div id="modalSubject" style="color: #fff; font-weight: 500;">Hostel Room Allotment request</div>
+        </div>
+
+        <div class="modal-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="updateStatus">Ticket Status</label>
+            <select id="updateStatus" class="form-control">
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Open">Open</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="updateProgress">Stage Progress</label>
+            <select id="updateProgress" class="form-control">
+              <option value="1">Stage 1: Submitted (25%)</option>
+              <option value="2">Stage 2: Department Assigned (50%)</option>
+              <option value="3">Stage 3: Desk Review & Action (75%)</option>
+              <option value="4">Stage 4: Final Resolution (100%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="updateCurrentStage">Current Stage Label</label>
+            <input type="text" id="updateCurrentStage" class="form-control" placeholder="e.g. Hostel Office or Reviewing">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="updateNextStage">Next Stage Label</label>
+            <input type="text" id="updateNextStage" class="form-control" placeholder="e.g. Final Allocation & Room Keys">
+          </div>
+        </div>
+
+        <div class="modal-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="updateOfficer">Assigned Officer / Desk</label>
+            <input type="text" id="updateOfficer" class="form-control" placeholder="e.g. Chief Warden Office">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="updateEstTime">Estimated Resolution</label>
+            <input type="text" id="updateEstTime" class="form-control" placeholder="e.g. 1 Working Day">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" for="updateNotes" style="margin-bottom:0;">Official Administrative Resolution Notes</label>
+            <button type="button" class="admin-mike-btn" id="modalMikeBtn" title="Dictate notes with Faster-Whisper" aria-label="Dictate Notes (Mike)">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <span>Mike</span>
+            </button>
+          </div>
+          <textarea id="updateNotes" class="form-control" rows="3" placeholder="Provide resolution details or update remarks visible to student..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="cancelModalBtn">Cancel</button>
+        <button type="submit" class="btn-submit" style="width: auto; margin-top: 0;">Save & Publish Update</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Toast Notification Container -->
+  <div id="adminToast" class="toast-msg hidden"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const state = {
+        adminToken: sessionStorage.getItem('rms_admin_token') || '',
+        admin: null,
+        tickets: [],
+        feedback: [],
+        currentFilter: 'all',
+        searchTerm: '',
+        activeTicket: null
+      };
+
+      // Elements
+      const loginView = document.getElementById('loginView');
+      const dashboardView = document.getElementById('dashboardView');
+      const adminLoginForm = document.getElementById('adminLoginForm');
+      const adminUsername = document.getElementById('adminUsername');
+      const adminPassword = document.getElementById('adminPassword');
+      const loginAlert = document.getElementById('loginAlert');
+      const loginBtn = document.getElementById('loginBtn');
+      const adminProfileBox = document.getElementById('adminProfileBox');
+      const adminAvatar = document.getElementById('adminAvatar');
+      const adminName = document.getElementById('adminName');
+      const adminRole = document.getElementById('adminRole');
+      const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+      const demoChips = document.querySelectorAll('.demo-chip-btn');
+
+      const kpiTotal = document.getElementById('kpiTotal');
+      const kpiInProgress = document.getElementById('kpiInProgress');
+      const kpiResolved = document.getElementById('kpiResolved');
+      const kpiAuditCount = document.getElementById('kpiAuditCount');
+      const kpiFeedbackCount = document.getElementById('kpiFeedbackCount');
+      const kpiFeedbackCard = document.getElementById('kpiFeedbackCard');
+
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      const adminSearchInput = document.getElementById('adminSearchInput');
+      const refreshBtn = document.getElementById('refreshBtn');
+      const ticketsTableContainer = document.getElementById('ticketsTableContainer');
+      const ticketsTableBody = document.getElementById('ticketsTableBody');
+      const auditTableContainer = document.getElementById('auditTableContainer');
+      const auditTableBody = document.getElementById('auditTableBody');
+      const queriesTableContainer = document.getElementById('queriesTableContainer');
+      const queriesTableBody = document.getElementById('queriesTableBody');
+      const feedbackTableContainer = document.getElementById('feedbackTableContainer');
+      const feedbackTableBody = document.getElementById('feedbackTableBody');
+      const fbAvgRating = document.getElementById('fbAvgRating');
+      const fbTotalSubmissions = document.getElementById('fbTotalSubmissions');
+      const fbNetPromoter = document.getElementById('fbNetPromoter');
+      const guestViewBtn = document.getElementById('guestViewBtn');
+
+      const manageTicketModal = document.getElementById('manageTicketModal');
+      const manageTicketForm = document.getElementById('manageTicketForm');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const cancelModalBtn = document.getElementById('cancelModalBtn');
+
+      const modalTicketId = document.getElementById('modalTicketId');
+      const modalStudentRoll = document.getElementById('modalStudentRoll');
+      const modalSubject = document.getElementById('modalSubject');
+      const updateStatus = document.getElementById('updateStatus');
+      const updateProgress = document.getElementById('updateProgress');
+      const updateCurrentStage = document.getElementById('updateCurrentStage');
+      const updateNextStage = document.getElementById('updateNextStage');
+      const updateOfficer = document.getElementById('updateOfficer');
+      const updateEstTime = document.getElementById('updateEstTime');
+      const updateNotes = document.getElementById('updateNotes');
+      const adminToast = document.getElementById('adminToast');
+
+      function showToast(msg) {
+        adminToast.textContent = msg;
+        adminToast.classList.remove('hidden');
+        setTimeout(() => adminToast.classList.add('hidden'), 3500);
+      }
+
+      // 1. Initial Session Check
+      async function checkSession() {
+        if (!state.adminToken) {
+          showLogin();
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/admin/session', {
+            headers: { 'Authorization': `Bearer ${state.adminToken}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.authenticated && data.admin) {
+            state.admin = data.admin;
+            showDashboard();
+            loadTickets();
+          } else {
+            sessionStorage.removeItem('rms_admin_token');
+            state.adminToken = '';
+            showLogin();
+          }
+        } catch (e) {
+          showLogin();
+        }
+      }
+
+      function showLogin() {
+        loginView.classList.remove('hidden');
+        dashboardView.classList.add('hidden');
+        adminProfileBox.classList.add('hidden');
+        adminLogoutBtn.classList.add('hidden');
+      }
+
+      function showDashboard() {
+        loginView.classList.add('hidden');
+        dashboardView.classList.remove('hidden');
+        adminProfileBox.classList.remove('hidden');
+        adminLogoutBtn.classList.remove('hidden');
+
+        if (state.admin) {
+          adminName.textContent = state.admin.full_name || 'Administrator';
+          adminRole.textContent = `${state.admin.role || 'Admin'} • ${state.admin.department || 'Operations'}`;
+          const initials = (state.admin.full_name || 'AD').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+          adminAvatar.textContent = initials || 'AD';
+        } else {
+          adminName.textContent = 'Admin Workspace';
+          adminRole.textContent = 'Active Session';
+          adminAvatar.textContent = 'AW';
+        }
+      }
+
+      // Demo Chip Handlers
+      demoChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          adminUsername.value = chip.getAttribute('data-user');
+          adminPassword.value = chip.getAttribute('data-pass');
+          adminLoginForm.dispatchEvent(new Event('submit'));
+        });
+      });
+
+      // Guest / Observer Portal Viewer
+      if (guestViewBtn) {
+        guestViewBtn.addEventListener('click', () => {
+          state.admin = {
+            admin_id: 'GUEST-001',
+            username: 'guest_observer',
+            full_name: 'Guest Observer',
+            role: 'Portal Observer',
+            department: 'Student Affairs & Feedback Review'
+          };
+          state.adminToken = 'guest_observer_token';
+          showDashboard();
+          loadTickets();
+          loadFeedback(true);
+          showToast('Viewing Admin Portal in Observer Mode.');
+        });
+      }
+
+      // 2. Administrator Login Submission
+      adminLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loginAlert.classList.add('hidden');
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Verifying Credentials in admin.db...';
+
+        try {
+          const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: adminUsername.value.trim(),
+              password: adminPassword.value
+            })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            state.adminToken = data.session_token;
+            state.admin = data.admin;
+            sessionStorage.setItem('rms_admin_token', state.adminToken);
+            showDashboard();
+            loadTickets();
+            showToast(`Welcome, ${state.admin.full_name}!`);
+          } else {
+            loginAlert.textContent = data.error || 'Authentication failed. Please verify credentials.';
+            loginAlert.classList.remove('hidden');
+          }
+        } catch (err) {
+          loginAlert.textContent = 'Network or server error connecting to backend.';
+          loginAlert.classList.remove('hidden');
+        } finally {
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Authenticate Administrator';
+        }
+      });
+
+      // 3. Logout
+      adminLogoutBtn.addEventListener('click', async () => {
+        try {
+          await fetch('/api/admin/logout', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${state.adminToken}` }
+          });
+        } catch (e) {}
+        sessionStorage.removeItem('rms_admin_token');
+        state.adminToken = '';
+        state.admin = null;
+        showLogin();
+        showToast('Signed out of admin workspace.');
+      });
+
+      // 4. Load Tickets from university.db
+      async function loadTickets(silent = false) {
+        try {
+          const res = await fetch('/api/admin/tickets', {
+            headers: { 'Authorization': `Bearer ${state.adminToken}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.tickets) {
+            state.tickets = data.tickets;
+            updateKPIs(data.stats);
+            renderTable();
+          }
+        } catch (e) {
+          if (!silent) showToast('Failed to load tickets.');
+        }
+      }
+
+      if (kpiFeedbackCard) {
+        kpiFeedbackCard.addEventListener('click', () => {
+          const btn = document.querySelector('.filter-btn[data-filter="feedback"]');
+          if (btn) btn.click();
+        });
+      }
+
+      function updateKPIs(stats) {
+        if (!stats) return;
+        kpiTotal.textContent = stats.total !== undefined ? stats.total : 0;
+        kpiInProgress.textContent = stats.in_progress !== undefined ? stats.in_progress : 0;
+        kpiResolved.textContent = stats.resolved !== undefined ? stats.resolved : 0;
+        kpiAuditCount.textContent = stats.audit_logs_count !== undefined ? stats.audit_logs_count : 0;
+        if (kpiFeedbackCount && stats.feedback_count !== undefined) {
+          kpiFeedbackCount.textContent = `${stats.feedback_count} (${stats.feedback_avg || '0.0'}★)`;
+        }
+      }
+
+      // 5. Render Tickets Table
+      function renderTable() {
+        let filtered = state.tickets;
+
+        if (state.currentFilter !== 'all' && state.currentFilter !== 'audit') {
+          filtered = filtered.filter(t => (t.status || '').toLowerCase() === state.currentFilter);
+        }
+
+        if (state.searchTerm) {
+          const s = state.searchTerm.toLowerCase();
+          filtered = filtered.filter(t => 
+            (t.ticket_id || '').toLowerCase().includes(s) ||
+            (t.university_id || '').toLowerCase().includes(s) ||
+            (t.student_name || '').toLowerCase().includes(s) ||
+            (t.query_text || '').toLowerCase().includes(s) ||
+            (t.category || '').toLowerCase().includes(s)
+          );
+        }
+
+        if (filtered.length === 0) {
+          ticketsTableBody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                No tickets matching current filter criteria.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        ticketsTableBody.innerHTML = filtered.map(t => {
+          const isResolved = (t.status || '').toLowerCase() === 'resolved';
+          const statusClass = isResolved ? 'status-resolved' : 'status-in-progress';
+          const statusIcon = isResolved ? '🟢' : '🟡';
+          const progressPct = (t.stage_progress || 2) * 25;
+
+          return `
+            <tr>
+              <td><strong style="color: #60a5fa; font-family: 'Outfit', sans-serif;">${t.ticket_id}</strong></td>
+              <td>
+                <div style="font-weight: 600; color: #fff;">${t.student_name}</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Roll: ${t.university_id} • ${t.department_id || ''}</div>
+              </td>
+              <td>${t.category}</td>
+              <td>
+                <div style="font-size: 12px; font-weight: 500; color: #fff;">${t.current_stage || 'Under Review'}</div>
+                <div class="stage-pill">${progressPct}% Progress</div>
+              </td>
+              <td>
+                <span class="badge-status ${statusClass}">
+                  ${statusIcon} ${t.status}
+                </span>
+              </td>
+              <td style="color: var(--text-muted);">${t.assigned_officer || 'Unassigned'}</td>
+              <td>
+                <button class="btn-action-manage" data-tid="${t.ticket_id}">⚙️ Manage</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        // Attach Manage listeners
+        document.querySelectorAll('.btn-action-manage').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const tid = btn.getAttribute('data-tid');
+            openManageModal(tid);
+          });
+        });
+      }
+
+      // 6. Manage Ticket Modal
+      function openManageModal(ticketId) {
+        const ticket = state.tickets.find(t => t.ticket_id === ticketId);
+        if (!ticket) return;
+
+        state.activeTicket = ticket;
+        modalTicketId.textContent = ticket.ticket_id;
+        modalStudentRoll.textContent = `Roll: ${ticket.university_id} (${ticket.student_name})`;
+        modalSubject.textContent = ticket.query_text;
+
+        updateStatus.value = ticket.status || 'In Progress';
+        updateProgress.value = ticket.stage_progress || '3';
+        updateCurrentStage.value = ticket.current_stage || '';
+        updateNextStage.value = ticket.next_stage || '';
+        updateOfficer.value = ticket.assigned_officer || '';
+        updateEstTime.value = ticket.estimated_resolution || '';
+        updateNotes.value = ticket.human_resolution_notes || '';
+
+        manageTicketModal.showModal();
+      }
+
+      closeModalBtn.addEventListener('click', () => manageTicketModal.close());
+      cancelModalBtn.addEventListener('click', () => manageTicketModal.close());
+
+      // 7. Save & Update Ticket
+      manageTicketForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!state.activeTicket) return;
+
+        const tid = state.activeTicket.ticket_id;
+        const payload = {
+          ticket_id: tid,
+          status: updateStatus.value,
+          stage_progress: parseInt(updateProgress.value, 10),
+          current_stage: updateCurrentStage.value.trim(),
+          next_stage: updateNextStage.value.trim(),
+          assigned_officer: updateOfficer.value.trim(),
+          estimated_resolution: updateEstTime.value.trim(),
+          human_resolution_notes: updateNotes.value.trim()
+        };
+
+        try {
+          const res = await fetch('/api/admin/ticket/update', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${state.adminToken}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            manageTicketModal.close();
+            showToast(`✅ Ticket ${tid} updated & audited in admin.db!`);
+            await loadTickets();
+          } else {
+            alert(data.error || 'Failed to update ticket.');
+          }
+        } catch (err) {
+          alert('Network error updating ticket.');
+        }
+      });
+
+      // 8. Filters & Search Handlers
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', async () => {
+          filterBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const filter = btn.getAttribute('data-filter');
+          state.currentFilter = filter;
+
+          if (filter === 'audit') {
+            ticketsTableContainer.classList.add('hidden');
+            queriesTableContainer.classList.add('hidden');
+            feedbackTableContainer.classList.add('hidden');
+            auditTableContainer.classList.remove('hidden');
+            await loadAuditLogs();
+          } else if (filter === 'queries') {
+            ticketsTableContainer.classList.add('hidden');
+            auditTableContainer.classList.add('hidden');
+            feedbackTableContainer.classList.add('hidden');
+            queriesTableContainer.classList.remove('hidden');
+            await loadQueriesLogs();
+          } else if (filter === 'feedback') {
+            ticketsTableContainer.classList.add('hidden');
+            auditTableContainer.classList.add('hidden');
+            queriesTableContainer.classList.add('hidden');
+            feedbackTableContainer.classList.remove('hidden');
+            await loadFeedback();
+          } else {
+            ticketsTableContainer.classList.remove('hidden');
+            auditTableContainer.classList.add('hidden');
+            queriesTableContainer.classList.add('hidden');
+            feedbackTableContainer.classList.add('hidden');
+            renderTable();
+          }
+        });
+      });
+
+      async function loadFeedback(silent = false) {
+        try {
+          const headers = state.adminToken ? { 'Authorization': `Bearer ${state.adminToken}` } : {};
+          const res = await fetch('/api/admin/feedback', { headers });
+          const data = await res.json();
+          if (res.ok && data.success && Array.isArray(data.feedback)) {
+            state.feedback = data.feedback;
+
+            const total = data.stats && data.stats.total !== undefined ? data.stats.total : state.feedback.length;
+            const avg = data.stats && data.stats.average_rating !== undefined ? data.stats.average_rating : (total > 0 ? (state.feedback.reduce((a, f) => a + (f.rating || 5), 0) / total).toFixed(1) : '0.0');
+
+            if (fbAvgRating) fbAvgRating.textContent = `${avg} ★`;
+            if (fbTotalSubmissions) fbTotalSubmissions.textContent = total;
+
+            const positiveCount = state.feedback.filter(f => {
+              const rec = (f.recommendation || '').toLowerCase();
+              return (rec.includes('likely') && !rec.includes('unlikely')) || (f.rating >= 4);
+            }).length;
+            const recPct = total > 0 ? Math.round((positiveCount / total) * 100) : 100;
+            if (fbNetPromoter) fbNetPromoter.textContent = `${recPct}%`;
+
+            if (kpiFeedbackCount) {
+              kpiFeedbackCount.textContent = `${total} (${avg}★)`;
+            }
+
+            renderFeedbackTable();
+          } else {
+            if (feedbackTableBody) {
+              feedbackTableBody.innerHTML = `
+                <tr>
+                  <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                    ${data.error || 'No student feedback records found.'}
+                  </td>
+                </tr>
+              `;
+            }
+          }
+        } catch (e) {
+          if (!silent) showToast('Failed to load student feedback.');
+          if (feedbackTableBody) {
+            feedbackTableBody.innerHTML = `
+              <tr>
+                <td colspan="8" style="text-align: center; color: #f87171; padding: 40px;">
+                  Error loading feedback: ${e.message}
+                </td>
+              </tr>
+            `;
+          }
+        }
+      }
+
+      function renderFeedbackTable() {
+        if (!feedbackTableBody) return;
+        let filtered = state.feedback || [];
+
+        if (state.searchTerm) {
+          const s = state.searchTerm.toLowerCase();
+          filtered = filtered.filter(f =>
+            (f.feedback_id || '').toLowerCase().includes(s) ||
+            (f.university_id || '').toLowerCase().includes(s) ||
+            (f.student_name || '').toLowerCase().includes(s) ||
+            (f.category || '').toLowerCase().includes(s) ||
+            (f.comments || '').toLowerCase().includes(s) ||
+            (f.suggestions || '').toLowerCase().includes(s) ||
+            (f.resolution_quality || '').toLowerCase().includes(s)
+          );
+        }
+
+        if (filtered.length === 0) {
+          feedbackTableBody.innerHTML = `
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                No student feedback matching current filter/search criteria.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        feedbackTableBody.innerHTML = filtered.map(f => {
+          const ratingNum = Math.max(1, Math.min(5, parseInt(f.rating || 5, 10)));
+          const starsStr = '★'.repeat(ratingNum) + '☆'.repeat(5 - ratingNum);
+          const isAnon = (f.student_name || '').toLowerCase().includes('anonymous') || (f.university_id || '').startsWith('ANON-');
+
+          let qualityClass = 'quality-satisfactory';
+          let qualityIcon = '👍';
+          const qText = (f.resolution_quality || '').toLowerCase();
+          if (qText.includes('exceptional')) {
+            qualityClass = 'quality-exceptional';
+            qualityIcon = '🌟';
+          } else if (qText.includes('needs') || qText.includes('work')) {
+            qualityClass = 'quality-needs-work';
+            qualityIcon = '⚠️';
+          } else if (qText.includes('unsatisfactory')) {
+            qualityClass = 'quality-unsatisfactory';
+            qualityIcon = '❌';
+          }
+
+          let recClass = 'badge-rec-likely';
+          const rText = (f.recommendation || '').toLowerCase();
+          if (rText.includes('very')) recClass = 'badge-rec-very-likely';
+          else if (rText.includes('unlikely')) recClass = 'badge-rec-unlikely';
+          else if (rText.includes('neutral')) recClass = 'badge-rec-neutral';
+
+          const safeComments = escapeHtml(f.comments || '');
+          const safeSuggestions = f.suggestions ? escapeHtml(f.suggestions) : '';
+
+          return `
+            <tr>
+              <td><strong style="color: #fbbf24; font-family: 'Outfit', sans-serif;">${escapeHtml(f.feedback_id || '—')}</strong></td>
+              <td style="color: var(--text-dim); font-size: 11px; white-space: nowrap;">${escapeHtml(f.submitted_at || '—')}</td>
+              <td>
+                <div style="font-weight: 600; color: #fff;">
+                  ${isAnon ? '👤 Anonymous Student' : escapeHtml(f.student_name || 'Student')}
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                  ${isAnon ? `<span class="anon-pill">${escapeHtml(f.university_id)}</span>` : `Roll: <code>${escapeHtml(f.university_id || '')}</code>`}
+                </div>
+              </td>
+              <td>
+                <span class="category-pill">${escapeHtml(f.category || 'General Support')}</span>
+              </td>
+              <td>
+                <div class="rating-stars-gold" title="${ratingNum} out of 5 stars">
+                  ${starsStr}
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: 2px;">${ratingNum}.0 / 5.0</div>
+              </td>
+              <td>
+                <span class="quality-badge ${qualityClass}">${qualityIcon} ${escapeHtml(f.resolution_quality || 'Satisfactory')}</span>
+              </td>
+              <td>
+                <span class="quality-badge ${recClass}">${escapeHtml(f.recommendation || 'Likely')}</span>
+              </td>
+              <td style="max-width: 320px;">
+                <div style="color: #f1f5f9; font-size: 12.5px; line-height: 1.45; word-break: break-word;">${safeComments}</div>
+                ${safeSuggestions ? `
+                  <div style="margin-top: 6px; padding: 4px 8px; border-radius: 6px; background: rgba(56, 189, 248, 0.08); border-left: 2px solid #38bdf8; color: #bae6fd; font-size: 11.5px; word-break: break-word;">
+                    💡 <em>${safeSuggestions}</em>
+                  </div>` : ''}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      async function loadQueriesLogs() {
+        try {
+          const res = await fetch('/api/admin/student-queries', {
+            headers: { 'Authorization': `Bearer ${state.adminToken}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.queries) {
+            queriesTableBody.innerHTML = data.queries.map(q => `
+              <tr>
+                <td><strong style="color: #60a5fa;">${q.ticket_id || '—'}</strong></td>
+                <td><code>${q.query_id || '—'}</code></td>
+                <td><strong>${q.student_name}</strong><br><span style="font-size: 11px; color: var(--text-dim);">${q.university_id}</span></td>
+                <td><code style="color: #34d399; font-size: 11px;">${q.university_email}</code></td>
+                <td style="color: #fff; max-width: 220px; word-break: break-word;">${q.query_text}</td>
+                <td style="color: var(--text-muted); font-size: 12px; max-width: 280px; word-break: break-word;">
+                  ${(q.response_text || '').substring(0, 150)}...
+                </td>
+                <td style="color: var(--text-dim); font-size: 11px; white-space: nowrap;">${q.timestamp}</td>
+              </tr>
+            `).join('');
+          }
+        } catch (e) {
+          showToast('Failed to load student queries.');
+        }
+      }
+
+      async function loadAuditLogs() {
+        try {
+          const res = await fetch('/api/admin/audit-logs', {
+            headers: { 'Authorization': `Bearer ${state.adminToken}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.logs) {
+            kpiAuditCount.textContent = data.logs.length;
+            auditTableBody.innerHTML = data.logs.map(l => `
+              <tr>
+                <td><code>#${l.log_id}</code></td>
+                <td><strong>${l.username}</strong></td>
+                <td><span class="stage-pill" style="color: #60a5fa;">${l.action}</span></td>
+                <td><strong style="color: #f59e0b;">${l.target_ticket_id || '—'}</strong></td>
+                <td style="color: var(--text-muted); font-size: 12px;">${l.details || ''}</td>
+                <td style="color: var(--text-dim); font-size: 11px;">${l.timestamp}</td>
+              </tr>
+            `).join('');
+          }
+        } catch (e) {
+          showToast('Failed to load audit logs.');
+        }
+      }
+
+      adminSearchInput.addEventListener('input', (e) => {
+        state.searchTerm = e.target.value.trim();
+        if (state.currentFilter === 'feedback') {
+          renderFeedbackTable();
+        } else {
+          renderTable();
+        }
+      });
+
+      refreshBtn.addEventListener('click', () => {
+        if (state.currentFilter === 'feedback') {
+          loadFeedback();
+        } else if (state.currentFilter === 'audit') {
+          loadAuditLogs();
+        } else if (state.currentFilter === 'queries') {
+          loadQueriesLogs();
+        } else {
+          loadTickets();
+        }
+        showToast('Refreshing live data from university.db and admin.db...');
+      });
+
+      // Auto-refresh RMS data every 5 seconds so future student queries update automatically
+      setInterval(() => {
+        if (!dashboardView.classList.contains('hidden')) {
+          if (state.currentFilter === 'feedback') {
+            loadFeedback(true);
+          } else {
+            loadTickets(true);
+          }
+        }
+      }, 5000);
+
+      // Speech-to-Text "Mike" integration with Faster-Whisper CPU
+      function setupMikeSTT(btnElement, targetInputElement) {
+        if (!btnElement || !targetInputElement) return;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        btnElement.addEventListener('click', async () => {
+          if (isRecording) {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+              mediaRecorder.stop();
+            }
+            return;
+          }
+
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioChunks = [];
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = (e) => {
+              if (e.data.size > 0) audioChunks.push(e.data);
+            };
+
+            mediaRecorder.onstart = () => {
+              isRecording = true;
+              btnElement.classList.add('recording');
+              const span = btnElement.querySelector('span');
+              if (span) span.textContent = 'Listening...';
+              showToast('🎤 Mike listening... Speak now (Transcribing with Faster-Whisper).');
+            };
+
+            mediaRecorder.onstop = async () => {
+              isRecording = false;
+              btnElement.classList.remove('recording');
+              const span = btnElement.querySelector('span');
+              if (span) span.textContent = 'Transcribing...';
+
+              stream.getTracks().forEach(t => t.stop());
+
+              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              const formData = new FormData();
+              formData.append('audio', audioBlob, 'speech.wav');
+
+              try {
+                const res = await fetch('/api/transcribe', {
+                  method: 'POST',
+                  body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.text) {
+                  targetInputElement.value = data.text;
+                  targetInputElement.dispatchEvent(new Event('input'));
+                  showToast(`Heard: "${data.text}"`);
+                } else {
+                  showToast(data.error || 'No speech detected.');
+                }
+              } catch (err) {
+                showToast('STT transcription error.');
+              } finally {
+                if (span) span.textContent = 'Mike';
+              }
+            };
+
+            mediaRecorder.start();
+          } catch (err) {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+              const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+              const recog = new SpeechRecognition();
+              recog.lang = 'en-US';
+              recog.onstart = () => {
+                btnElement.classList.add('recording');
+                showToast('Listening via speech recognition...');
+              };
+              recog.onresult = (e) => {
+                const text = e.results[0][0].transcript;
+                targetInputElement.value = text;
+                targetInputElement.dispatchEvent(new Event('input'));
+                showToast(`Heard: "${text}"`);
+              };
+              recog.onend = () => {
+                btnElement.classList.remove('recording');
+              };
+              recog.start();
+            } else {
+              showToast('Microphone access is required for Speech-to-Text.');
+            }
+          }
+        });
+      }
+
+      setupMikeSTT(document.getElementById('adminMikeBtn'), adminSearchInput);
+      setupMikeSTT(document.getElementById('modalMikeBtn'), document.getElementById('updateNotes'));
+
+      // Boot
+      checkSession();
+    });
+  </script>
+</body>
+</html>
