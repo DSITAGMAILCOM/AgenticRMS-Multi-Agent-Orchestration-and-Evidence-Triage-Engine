@@ -47,9 +47,23 @@ os.makedirs(STATIC_DIR, exist_ok=True)
 STUDENT_TOKEN_SECRET = os.getenv("STUDENT_TOKEN_SECRET", "univ_student_secure_token_secret_2026")
 
 
+def is_university_db_seeded() -> bool:
+    try:
+        if not os.path.exists(DB_PATH) or os.path.getsize(DB_PATH) == 0:
+            return False
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM students")
+        cnt = cur.fetchone()[0]
+        conn.close()
+        return cnt > 0
+    except Exception:
+        return False
+
+
 def ensure_databases():
     """Guarantees university.db and admin.db exist with seed data on fresh deployment (Render/Cloud)."""
-    if not os.path.exists(DB_PATH):
+    if not is_university_db_seeded():
         try:
             from database_setup import init_db
             init_db()

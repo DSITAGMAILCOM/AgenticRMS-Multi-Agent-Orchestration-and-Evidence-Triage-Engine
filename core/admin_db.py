@@ -181,6 +181,17 @@ def authenticate_admin(username: str, plain_password: str, ip_address: str = "12
     user = cursor.fetchone()
 
     if not user:
+        # Check if table exists or is unseeded
+        try:
+            cursor.execute("SELECT COUNT(*) FROM admin_users")
+            cnt = cursor.fetchone()[0]
+            if cnt == 0:
+                raise ValueError("Unseeded admin table")
+        except Exception:
+            conn.close()
+            init_admin_database()
+            return authenticate_admin(username, plain_password, ip_address)
+
         conn.close()
         return {"success": False, "error": "Invalid administrator username or credentials."}
 

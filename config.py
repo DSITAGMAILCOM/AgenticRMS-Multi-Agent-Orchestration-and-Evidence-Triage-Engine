@@ -10,20 +10,36 @@ DB_PATH = os.path.join(BASE_DIR, "university.db")
 ADMIN_DB_PATH = os.path.join(BASE_DIR, "admin.db")
 ENV_PATH = os.path.join(BASE_DIR, ".env")
 
-# Auto-initialize databases on fresh deployment (e.g. Render / Cloud)
-if not os.path.exists(DB_PATH):
+# Auto-initialize and seed databases on fresh deployment (Render / Cloud)
+def _check_bootstrap():
     try:
-        from database_setup import init_db
-        init_db()
+        if not os.path.exists(DB_PATH) or os.path.getsize(DB_PATH) == 0:
+            from database_setup import init_db
+            init_db()
+        else:
+            import sqlite3
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) FROM students")
+            cnt = c.fetchone()[0]
+            conn.close()
+            if cnt == 0:
+                from database_setup import init_db
+                init_db()
     except Exception:
-        pass
+        try:
+            from database_setup import init_db
+            init_db()
+        except Exception:
+            pass
 
-if not os.path.exists(ADMIN_DB_PATH):
     try:
         from core.admin_db import init_admin_database
         init_admin_database()
     except Exception:
         pass
+
+_check_bootstrap()
 
 load_dotenv(dotenv_path=ENV_PATH, override=True)
 

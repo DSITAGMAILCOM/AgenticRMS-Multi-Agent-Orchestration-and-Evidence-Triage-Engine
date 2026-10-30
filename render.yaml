@@ -3,7 +3,7 @@ services:
     name: agentic-rms-backend
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python database_setup.py
     startCommand: python server.py
     envVars:
       - key: GROQ_API_KEY

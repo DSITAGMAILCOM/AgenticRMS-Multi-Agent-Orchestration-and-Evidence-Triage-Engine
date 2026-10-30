@@ -69,6 +69,20 @@ class StudentSession:
             conn.close()
 
             if not row:
+                # Self-healing check: verify if students table exists and has rows
+                try:
+                    conn2 = sqlite3.connect(DB_PATH)
+                    c2 = conn2.cursor()
+                    c2.execute("SELECT COUNT(*) FROM students")
+                    cnt = c2.fetchone()[0]
+                    conn2.close()
+                    if cnt == 0:
+                        raise ValueError("Empty students table")
+                except Exception:
+                    # Database uninitialized on cloud container -> self-heal
+                    from database_setup import init_db
+                    init_db()
+                    return self.authenticate_or_lookup(identifier)
                 return False
 
             self.student_id = row[0]
