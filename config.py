@@ -17,7 +17,15 @@ console = Console()
 # 2. Groq Client Initialization
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip().strip("'\"")
 if not GROQ_API_KEY or GROQ_API_KEY.startswith("gsk_your_groq"):
-    console.print("[bold yellow]⚠️ WARNING: Valid GROQ_API_KEY not found in .env. Please copy .env.example to .env and configure your Groq API key.[/bold yellow]")
+    try:
+        import streamlit as _st
+        if hasattr(_st, "secrets") and "GROQ_API_KEY" in _st.secrets:
+            GROQ_API_KEY = str(_st.secrets["GROQ_API_KEY"]).strip().strip("'\"")
+    except Exception:
+        pass
+
+if not GROQ_API_KEY or GROQ_API_KEY.startswith("gsk_your_groq"):
+    console.print("[bold yellow]⚠️ WARNING: Valid GROQ_API_KEY not found in .env or st.secrets. Please configure your Groq API key.[/bold yellow]")
 
 client = Groq(api_key=GROQ_API_KEY or "dummy_key_to_prevent_init_crash")
 
