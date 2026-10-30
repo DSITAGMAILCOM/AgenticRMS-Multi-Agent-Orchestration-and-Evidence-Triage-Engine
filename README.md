@@ -6,9 +6,14 @@
 [![LLM Groq](https://img.shields.io/badge/Inference-Groq%20Cloud%20(OpenAI%20API)-F55036.svg)](#)
 [![Security Hardened](https://img.shields.io/badge/Security-RLS%20%2B%20HMAC%20Tokens%20%2B%20Zero--Trust-green.svg)](#)
 [![Deployed on Render](https://img.shields.io/badge/Backend-Render-46E3B7.svg?logo=render&logoColor=white)](https://agenticrms-multi-agent-orchestration-and.onrender.com)
-[![Deployed on Netlify](https://img.shields.io/badge/Frontend-Netlify-00C7B7.svg?logo=netlify&logoColor=white)](#)
+[![Deployed on Netlify](https://img.shields.io/badge/Frontend-Netlify-00C7B7.svg?logo=netlify&logoColor=white)](https://agenticrms-multi-agent-orchestration.netlify.app/)
 
 A high-performance, enterprise-grade **Multi-Agent University Support Portal & Relationship Management System (RMS)**. The system dynamically classifies, decomposes, and orchestrates complex student inquiries across specialized autonomous domain agents with strict zero-trust data breach protections, dual-database isolation, self-healing database seeding, and concise point-to-point responses.
+
+> 🌐 **Live Production Deployments**:
+> - **Student Portal (Netlify)**: [https://agenticrms-multi-agent-orchestration.netlify.app/](https://agenticrms-multi-agent-orchestration.netlify.app/)
+> - **Administrator Management Portal**: [https://agenticrms-multi-agent-orchestration.netlify.app/admin](https://agenticrms-multi-agent-orchestration.netlify.app/admin)
+> - **Backend API Service (Render)**: [https://agenticrms-multi-agent-orchestration-and.onrender.com](https://agenticrms-multi-agent-orchestration-and.onrender.com)
 
 ---
 
@@ -537,6 +542,9 @@ The frontend is deployed directly from the `static/` directory:
 - **Configuration Files**:
   - [`netlify.toml`](file:///Users/aditya/Documents/INT_335_Project/netlify.toml): Configures route rewriting, proxy redirection, and header caching policies.
   - [`static/_redirects`](file:///Users/aditya/Documents/INT_335_Project/static/_redirects): Netlify fallback routing rule ensuring `/admin` rewrites cleanly to `/admin.html`.
+- **Live Production URLs**:
+  - **Student Portal**: [https://agenticrms-multi-agent-orchestration.netlify.app/](https://agenticrms-multi-agent-orchestration.netlify.app/)
+  - **Administrator Portal**: [https://agenticrms-multi-agent-orchestration.netlify.app/admin](https://agenticrms-multi-agent-orchestration.netlify.app/admin)
 
 ---
 
@@ -631,8 +639,10 @@ The server will start at:
 
 ### 6. Demo Authentication Credentials
 
+The following pre-seeded credentials work seamlessly on both **local environments** and the **live Netlify production deployment** ([https://agenticrms-multi-agent-orchestration.netlify.app/](https://agenticrms-multi-agent-orchestration.netlify.app/)):
+
 #### Student Portal Accounts
-You can log in to the Student Portal using any of the following pre-seeded registration numbers:
+Log in to the Student Portal using any of the pre-seeded registration numbers:
 
 | Registration No. | Student Name | Department / Degree | Current Semester |
 | :--- | :--- | :--- | :--- |
@@ -641,7 +651,7 @@ You can log in to the Student Portal using any of the following pre-seeded regis
 | `12301142` | Rahul Verma | MBA Financial Management | Semester 2 |
 
 #### Administrator Management Portal
-Navigate to `/admin` and log in with the default credentials:
+Navigate to `/admin` (or [https://agenticrms-multi-agent-orchestration.netlify.app/admin](https://agenticrms-multi-agent-orchestration.netlify.app/admin)) and log in with the default administrative credentials:
 - **Username**: `admin`
 - **Password**: `AdminPassword2026!`
 
