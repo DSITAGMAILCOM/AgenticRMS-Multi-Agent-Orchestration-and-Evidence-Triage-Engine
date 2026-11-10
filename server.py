@@ -914,6 +914,69 @@ async def api_admin_feedback(request):
         return JSONResponse({"success": False, "feedback": [], "error": str(e)}, status_code=500)
 
 
+async def api_upload_pdf(request):
+    """
+    High-Speed Dynamic PDF Ingestion Endpoint:
+    Accepts uploaded PDF document, automatically routes it to the target domain/department,
+    extracts chunks, updates the local FAISS vector index in real-time, and clears query caches.
+    """
+    try:
+        form = await request.form()
+        uploaded_file = form.get("file")
+        department = str(form.get("department", "edu_revolution") or "edu_revolution").strip()
+
+        if not uploaded_file:
+            return JSONResponse({"success": False, "error": "No file uploaded. Please provide a PDF file."}, status_code=400)
+
+        filename = getattr(uploaded_file, "filename", "uploaded_doc.pdf")
+        if not filename.lower().endswith(".pdf"):
+            return JSONResponse({"success": False, "error": "Invalid file format. Only PDF documents are accepted."}, status_code=400)
+
+        content = await uploaded_file.read()
+        if not content:
+            return JSONResponse({"success": False, "error": "Uploaded file is empty."}, status_code=400)
+
+        from core.base_rag import GLOBAL_RAG_REGISTRY
+        from domains.edu_revolution.rag import edurev_rag
+
+        # Resolve target vector store
+        store = GLOBAL_RAG_REGISTRY.get(department) or edurev_rag
+        res = store.ingest_pdf(content, filename)
+
+        return JSONResponse({
+            "success": True,
+            "message": f"Successfully ingested and indexed '{filename}' into {store.dept_name}.",
+            "details": res
+        })
+    except Exception as e:
+        console.print(f"[bold red]PDF Ingestion Error: {e}[/bold red]")
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+async def api_list_documents(request):
+    """Lists all indexed university PDF documents across domains."""
+    try:
+        from core.base_rag import GLOBAL_RAG_REGISTRY
+        import glob
+        docs = []
+        seen = set()
+        for dept_name, store in GLOBAL_RAG_REGISTRY.items():
+            if id(store) in seen:
+                continue
+            seen.add(id(store))
+            pdfs = glob.glob(os.path.join(store.docs_dir, "*.pdf"))
+            for p in pdfs:
+                docs.append({
+                    "filename": os.path.basename(p),
+                    "department": store.dept_name,
+                    "size_bytes": os.path.getsize(p),
+                    "modified_time": os.path.getmtime(p)
+                })
+        return JSONResponse({"success": True, "documents": docs, "total": len(docs)})
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
 # =========================================================================
 # Application Routing Table
 # =========================================================================
@@ -941,6 +1004,11 @@ routes = [
     Route("/api/admin/audit-logs", api_admin_audit_logs, methods=["GET"]),
     Route("/api/admin/student-queries", api_admin_student_queries, methods=["GET"]),
     Route("/api/admin/feedback", api_admin_feedback, methods=["GET"]),
+
+    # Document & RAG Management Endpoints
+    Route("/api/upload-pdf", api_upload_pdf, methods=["POST"]),
+    Route("/api/admin/upload-pdf", api_upload_pdf, methods=["POST"]),
+    Route("/api/documents", api_list_documents, methods=["GET"]),
 
     # Static Assets
     Mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

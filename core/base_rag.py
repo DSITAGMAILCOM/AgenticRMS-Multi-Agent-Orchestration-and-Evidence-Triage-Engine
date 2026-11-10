@@ -1,9 +1,13 @@
 import os
 import glob
 import json
+import time
 import hashlib
 from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
+
+# Global RAG registry for dynamic document lookup and ingestion
+GLOBAL_RAG_REGISTRY: Dict[str, Any] = {}
 
 # Embedding & Vector store dependencies
 _embeddings_instance = None
@@ -115,15 +119,16 @@ class DepartmentVectorStore:
         os.makedirs(self.docs_dir, exist_ok=True)
         os.makedirs(self.index_dir, exist_ok=True)
         
-        # Lazy initialization: do NOT load heavy FAISS indexes or embeddings during module import
+        # Lazy initialization & hot-reload state
         self._vstore = None
+        self._last_pdf_check = 0.0
+        self._cached_pdf_files: List[str] = []
+        self._query_cache: Dict[str, Tuple[str, float]] = {}
 
-    @property
-    def vstore(self):
-        """Lazy-loads or builds the FAISS vector index only when first requested."""
-        if self._vstore is None:
-            self._vstore = self._build_index()
-        return self._vstore
+        # Register in global registry for dynamic lookups and upload routing
+        GLOBAL_RAG_REGISTRY[self.dept_name] = self
+        if dept_id:
+            GLOBAL_RAG_REGISTRY[dept_id] = self
 
     def _hash_file(self, path: str) -> str:
         h = hashlib.sha256()
@@ -131,6 +136,73 @@ class DepartmentVectorStore:
             while chunk := f.read(65536):
                 h.update(chunk)
         return h.hexdigest()
+
+    def _needs_refresh(self) -> bool:
+        """
+        Fast non-blocking check: verifies if PDFs have been added, modified,
+        or removed since the FAISS index was last loaded.
+        """
+        now = time.time()
+        if now - self._last_pdf_check < 2.0:
+            return False  # Throttle filesystem checks to at most once per 2 seconds
+        self._last_pdf_check = now
+
+        current_pdfs = sorted(glob.glob(os.path.join(self.docs_dir, "*.pdf")))
+        if current_pdfs != self._cached_pdf_files:
+            return True
+
+        # Check if registry file exists
+        if not os.path.exists(self.registry_file):
+            return bool(current_pdfs)
+
+        try:
+            with open(self.registry_file, "r") as f:
+                reg = json.load(f)
+            if len(current_pdfs) != len(reg):
+                return True
+            for pdf in current_pdfs:
+                fname = os.path.basename(pdf)
+                if fname not in reg:
+                    return True
+        except Exception:
+            return True
+
+        return False
+
+    @property
+    def vstore(self):
+        """Lazy-loads or hot-refreshes the FAISS vector index whenever documents change."""
+        if self._vstore is None or self._needs_refresh():
+            self._vstore = self._build_index()
+            self._cached_pdf_files = sorted(glob.glob(os.path.join(self.docs_dir, "*.pdf")))
+            self._query_cache.clear()  # Invalidate cached searches when index updates
+        return self._vstore
+
+    def ingest_pdf(self, file_content: bytes, filename: str) -> Dict[str, Any]:
+        """
+        Dynamically ingests an uploaded PDF into the department's docs directory,
+        instantly processes it into chunks, updates the FAISS vector index,
+        and clears query caches so new knowledge is immediately searchable.
+        """
+        clean_name = os.path.basename(filename)
+        dest_path = os.path.join(self.docs_dir, clean_name)
+        with open(dest_path, "wb") as f:
+            f.write(file_content)
+
+        # Force rebuild/refresh of the vector index
+        t0 = time.perf_counter()
+        self._vstore = self._build_index()
+        self._cached_pdf_files = sorted(glob.glob(os.path.join(self.docs_dir, "*.pdf")))
+        self._query_cache.clear()
+        duration_ms = round((time.perf_counter() - t0) * 1000, 2)
+
+        return {
+            "success": True,
+            "filename": clean_name,
+            "department": self.dept_name,
+            "indexed_path": dest_path,
+            "indexing_latency_ms": duration_ms
+        }
 
     def _build_index(self):
         """Constructs or updates the FAISS vector index from PDFs in docs_dir."""
@@ -210,7 +282,14 @@ class DepartmentVectorStore:
         return store
 
     def search(self, query: str, k: int = 4) -> str:
-        """Executes similarity search on the vector store, returning markdown-formatted context."""
+        """Executes similarity search on the vector store, returning markdown-formatted context with in-memory caching."""
+        cache_key = f"{query.strip().lower()}_k{k}"
+        now = time.time()
+        if cache_key in self._query_cache:
+            cached_res, expiry = self._query_cache[cache_key]
+            if now < expiry:
+                return cached_res
+
         if not self.vstore:
             return f"No indexed syllabus/documents available for {self.dept_name}."
 
@@ -226,6 +305,8 @@ class DepartmentVectorStore:
                 text = d.page_content.strip()
                 passages.append(f"[{source} p.{page}]: {text}")
 
-            return "\n\n---\n\n".join(passages)
+            result = "\n\n---\n\n".join(passages)
+            self._query_cache[cache_key] = (result, now + 120.0)  # 2 minute cache
+            return result
         except Exception as e:
             return f"Vector search error in {self.dept_name}: {e}"

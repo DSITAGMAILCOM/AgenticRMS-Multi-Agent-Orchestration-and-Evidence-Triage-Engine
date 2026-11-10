@@ -5,10 +5,14 @@ Enforces zero-trust query validation, strict table whitelisting,
 and mandatory student-level data isolation to prevent data breaches and IDOR.
 """
 import re
+import time
 import sqlite3
 import json
-from typing import Optional, Any
+from typing import Optional, Any, Dict, Tuple
 from config import DB_PATH, console
+
+# High-speed in-memory query cache (30s TTL)
+_db_query_cache: Dict[str, Tuple[str, float]] = {}
 
 # Allowed tables classification
 PUBLIC_TABLES = {"courses", "transport_routes", "exam_datesheets"}
@@ -115,7 +119,15 @@ def run_db_query(
             else:
                 clean_sql = f"{clean_sql} WHERE university_id = '{auth_id}'"
 
-    # 5. Execute with read-only connection
+    # 5. Check in-memory fast cache
+    cache_key = f"{auth_id}:{clean_sql}"
+    now = time.time()
+    if cache_key in _db_query_cache:
+        cached_val, exp = _db_query_cache[cache_key]
+        if now < exp:
+            return cached_val
+
+    # 6. Execute with read-only connection
     try:
         conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
         cursor = conn.cursor()
@@ -125,10 +137,14 @@ def run_db_query(
         conn.close()
 
         if not rows:
-            return "No matching records found in the database."
+            res = "No matching records found in the database."
+            _db_query_cache[cache_key] = (res, now + 15.0)
+            return res
 
         results = [dict(zip(cols, r)) for r in rows[:15]]
-        return json.dumps(results, indent=2)
+        formatted_json = json.dumps(results, indent=2)
+        _db_query_cache[cache_key] = (formatted_json, now + 30.0)
+        return formatted_json
     except sqlite3.OperationalError as oe:
         return f"Query Notice: {oe}"
     except Exception as e:

@@ -120,18 +120,27 @@ class EduRevolutionAgent:
             console.print("[bold green]  ⚡ [Edu-Rev Agent] FAQ Hit -> Bypassing Database & RAG (₹0 Token Cost)[/bold green]")
             return faq_match
 
-        # Step 2: Personalized Inquiry via DB + RAG
+        # Step 2: High-Speed Pre-fetch of Live Student Internship Records
+        internship_data_snippet = ""
+        try:
+            intern_records = run_db_query(f"SELECT company_name, role_title, stipend, noc_status, hod_approval, dean_approval, coordinator_name, coordinator_cabin, submission_date FROM internship_files WHERE university_id = '{session.university_id}'", authenticated_student_id=session.university_id)
+            internship_data_snippet = f"\nLIVE STUDENT INTERNSHIP RECORDS (From University Database):\n{intern_records}\n"
+        except Exception:
+            internship_data_snippet = ""
+
+        # Step 3: Personalized Inquiry via Fast Grounded Context + Tools
         system_prompt = f"""You are the Edu-Revolution & Career Services Agent for the University.
 Track industrial internship files, NOC status, HOD/Dean sign-offs, and coordinator office locations.
 
 STUDENT PROFILE:
 - Name: {session.full_name}
 - Registration ID: {session.university_id}
-
+{internship_data_snippet}
 Instructions:
-1. Always filter internship records using university_id = '{session.university_id}'.
-2. Read the student's question carefully and provide a concise, point-to-point answer within 2 to 3 lines.
-3. Do not write long paragraphs. Present status or answers directly and concisely.
+1. If the student asks about their personal internship file, NOC status, or coordinator, synthesize directly from the LIVE RECORDS above without calling extra tools.
+2. If asking about policies, NPTEL equivalence, or guidelines, use `search_internship_guidelines`.
+3. Provide a concise, point-to-point answer within 2 to 3 lines.
+4. Do not write long paragraphs. Present status or answers directly and concisely.
 """
         messages = [
             {"role": "system", "content": system_prompt},

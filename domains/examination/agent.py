@@ -145,7 +145,19 @@ class ExaminationAgent:
             console.print("[bold green]  ⚡ [Exam Agent] FAQ Hit -> Bypassing Database & RAG (₹0 Token Cost)[/bold green]")
             return faq_match
 
-        # Step 2: Personalized Inquiry via DB + RAG
+        # Step 2: High-Speed Pre-fetch of Live Exam & Seating Records
+        exam_data_snippet = ""
+        try:
+            courses_str = ", ".join([f"'{c}'" for c in session.enrolled_courses]) if session.enrolled_courses else ""
+            datesheet_sql = f"SELECT course_code, exam_type, exam_date, session_time, venue_center FROM exam_datesheets WHERE course_code IN ({courses_str})" if courses_str else "SELECT 1 WHERE 0"
+            datesheets = run_db_query(datesheet_sql, authenticated_student_id=session.university_id)
+            seating = run_db_query(f"SELECT course_code, room_no, desk_no, invigilator_name FROM seating_arrangements WHERE university_id = '{session.university_id}'", authenticated_student_id=session.university_id)
+            grades = run_db_query(f"SELECT course_code, course_name, credits, grade, grade_point FROM grade_records WHERE university_id = '{session.university_id}'", authenticated_student_id=session.university_id)
+            exam_data_snippet = f"\nLIVE STUDENT EXAM & GRADE RECORDS (From University Database):\n- Enrolled Exam Datesheet: {datesheets}\n- Seating Hall Allocation: {seating}\n- Grades: {grades}\n"
+        except Exception:
+            exam_data_snippet = ""
+
+        # Step 3: Personalized Inquiry via Fast Grounded Context + Tools
         system_prompt = f"""You are the Controller of Examinations (COE) Agent.
 Handle all exam logistics, admit cards, datesheets, seating arrangements, and grades.
 
@@ -167,9 +179,9 @@ STUDENT PROFILE:
 - Name: {session.full_name}
 - Registration ID: {session.university_id}
 - Enrolled Courses: {', '.join(session.enrolled_courses)}
-
+{exam_data_snippet}
 Instructions:
-1. Always filter student-specific records using university_id = '{session.university_id}'.
+1. If the student asks about their exam schedule, seating hall, or grades, synthesize the answer directly from the LIVE RECORDS above without calling extra tools.
 2. Read the student's question carefully and provide a concise, point-to-point answer within 2 to 3 lines.
 3. Do not write long paragraphs or unnecessary filler.
 4. Cite the official university grading scale or database record when reporting grades or schedules.
