@@ -37,7 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedTicketId: null,
     searchTerm: '',
     statusFilter: 'all',
-    historyPeriod: '6months'
+    historyPeriod: '6months',
+    ticketChats: {}
   };
 
   // DOM Elements - Views & Navigation
@@ -97,6 +98,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const summaryEstTime = document.getElementById('summaryEstTime');
   const vtCurrentStageName = document.getElementById('vtCurrentStageName');
   const vtNextStageName = document.getElementById('vtNextStageName');
+
+  // DOM Elements - Ticket Follow-Up & Appeal AI Chat
+  const ticketChatCard = document.getElementById('ticketChatCard');
+  const ticketChatContextBadge = document.getElementById('ticketChatContextBadge');
+  const ticketChatStream = document.getElementById('ticketChatStream');
+  const ticketChatForm = document.getElementById('ticketChatForm');
+  const ticketChatInput = document.getElementById('ticketChatInput');
+  const ticketChatMikeBtn = document.getElementById('ticketChatMikeBtn');
+  const ticketChatSendBtn = document.getElementById('ticketChatSendBtn');
+  const ticketChatChips = document.querySelectorAll('.t-chip');
 
   // DOM Elements - RMS History
   const historyPeriodFilter = document.getElementById('historyPeriodFilter');
@@ -431,6 +442,9 @@ document.addEventListener('DOMContentLoaded', () => {
         rmsHumanResolutionCard.classList.add('hidden');
       }
     }
+
+    // Render Interactive Ticket Follow-Up & Appeal AI Chat
+    renderTicketChat(activeTicket);
   }
 
   function renderStepper(ticket) {
@@ -471,6 +485,236 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="step-time">${ticket.resolved_at ? escapeHtml(ticket.resolved_at) : 'Completed'}</span>
       </div>
     `;
+  }
+
+  // =========================================================================
+  // Ticket Follow-Up & Appeal AI Chat Logic
+  // =========================================================================
+  function renderTicketChat(ticket) {
+    if (!ticket || !ticketChatStream) return;
+
+    if (ticketChatContextBadge) {
+      ticketChatContextBadge.textContent = `RMS #${ticket.ticket_id}`;
+    }
+
+    if (!state.ticketChats[ticket.ticket_id]) {
+      const studentName = state.currentStudent.student_name ? state.currentStudent.student_name.split(' ')[0] : 'Student';
+      const isResolved = (ticket.status || '').toLowerCase() === 'resolved';
+      const isAppeal = (ticket.status || '').toUpperCase() === 'APPEAL_UNDER_REVIEW';
+
+      let welcomeText = `Dear ${studentName}, I have loaded the live records for Ticket #${ticket.ticket_id} (${ticket.category || 'General Inquiry'}). `;
+      if (isAppeal) {
+        welcomeText += `Your ticket is currently under review by the higher committee as an active appeal. How may I assist you further?`;
+      } else if (isResolved) {
+        welcomeText += `The committee has marked this request as Resolved. If you are not satisfied with this outcome or need any clarification, please let me know and I will gladly register your appeal and assist you.`;
+      } else {
+        welcomeText += `Your request is currently marked as ${ticket.status || 'In Progress'} with ${ticket.assigned_officer || 'the designated department'}. You can ask questions, seek clarification, or file an appeal at any time.`;
+      }
+
+      state.ticketChats[ticket.ticket_id] = [
+        {
+          role: 'ai',
+          sender: 'AI Ticket Specialist',
+          text: welcomeText,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ];
+    }
+
+    const msgs = state.ticketChats[ticket.ticket_id] || [];
+    ticketChatStream.innerHTML = msgs.map(m => `
+      <div class="ticket-msg ${m.role}">
+        <span class="ticket-msg-meta">${m.role === 'user' ? 'You' : escapeHtml(m.sender || 'AI Assistant')} • ${escapeHtml(m.time || '')}</span>
+        <div>${escapeHtml(m.text)}</div>
+      </div>
+    `).join('');
+
+    ticketChatStream.scrollTop = ticketChatStream.scrollHeight;
+  }
+
+  async function handleSendTicketChat(text) {
+    const activeTicket = state.tickets.find(t => t.ticket_id === state.selectedTicketId);
+    if (!activeTicket) {
+      showToast('Please select a ticket to continue.');
+      return;
+    }
+    const query = (text || (ticketChatInput ? ticketChatInput.value : '')).trim();
+    if (!query) return;
+
+    if (ticketChatInput) ticketChatInput.value = '';
+
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (!state.ticketChats[activeTicket.ticket_id]) {
+      state.ticketChats[activeTicket.ticket_id] = [];
+    }
+    state.ticketChats[activeTicket.ticket_id].push({
+      role: 'user',
+      sender: 'You',
+      text: query,
+      time: nowTime
+    });
+    renderTicketChat(activeTicket);
+
+    if (ticketChatSendBtn) ticketChatSendBtn.disabled = true;
+    if (ticketChatInput) ticketChatInput.disabled = true;
+
+    const thinkingNode = document.createElement('div');
+    thinkingNode.className = 'ticket-msg ai';
+    thinkingNode.id = 'ticketChatThinkingBubble';
+    thinkingNode.innerHTML = `
+      <span class="ticket-msg-meta">AI Assistant • Ticket Specialist</span>
+      <div style="display: flex; align-items: center; gap: 8px; color: #94a3b8;">
+        <span>Reviewing ticket records and preparing response</span>
+        <span class="loading-dots">...</span>
+      </div>
+    `;
+    ticketChatStream.appendChild(thinkingNode);
+    ticketChatStream.scrollTop = ticketChatStream.scrollHeight;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/ticket/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticket_id: activeTicket.ticket_id,
+          query: query,
+          reg_no: state.currentStudent.registration_no
+        })
+      });
+
+      const data = await res.json();
+      const bubble = document.getElementById('ticketChatThinkingBubble');
+      if (bubble) bubble.remove();
+
+      if (data.success) {
+        state.ticketChats[activeTicket.ticket_id].push({
+          role: 'ai',
+          sender: 'AI Ticket Specialist',
+          text: data.response,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+
+        if (data.reopened || (data.status && data.status !== activeTicket.status)) {
+          activeTicket.status = data.status || 'APPEAL_UNDER_REVIEW';
+          activeTicket.stage_progress = 2;
+          showToast(`Appeal registered: Ticket #${activeTicket.ticket_id} status updated to ${activeTicket.status}`);
+          renderTrackRmsView();
+        } else {
+          renderTicketChat(activeTicket);
+        }
+      } else {
+        state.ticketChats[activeTicket.ticket_id].push({
+          role: 'ai',
+          sender: 'System',
+          text: data.error || 'Unable to process your request at this time. Please try again.',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+        renderTicketChat(activeTicket);
+      }
+    } catch (err) {
+      const bubble = document.getElementById('ticketChatThinkingBubble');
+      if (bubble) bubble.remove();
+      console.error('Ticket chat error:', err);
+      state.ticketChats[activeTicket.ticket_id].push({
+        role: 'ai',
+        sender: 'System',
+        text: 'Network error communicating with the ticket assistant. Please try again shortly.',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      renderTicketChat(activeTicket);
+    } finally {
+      if (ticketChatSendBtn) ticketChatSendBtn.disabled = false;
+      if (ticketChatInput) {
+        ticketChatInput.disabled = false;
+        ticketChatInput.focus();
+      }
+    }
+  }
+
+  let ticketMediaRecorder = null;
+  let ticketAudioChunks = [];
+  let isTicketRecording = false;
+
+  async function toggleTicketSpeech() {
+    if (!ticketChatMikeBtn || !ticketChatInput) return;
+
+    if (isTicketRecording) {
+      if (ticketMediaRecorder && ticketMediaRecorder.state !== 'inactive') {
+        ticketMediaRecorder.stop();
+      }
+      return;
+    }
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        ticketAudioChunks = [];
+        ticketMediaRecorder = new MediaRecorder(stream);
+
+        ticketMediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) ticketAudioChunks.push(e.data);
+        };
+
+        ticketMediaRecorder.onstart = () => {
+          isTicketRecording = true;
+          ticketChatMikeBtn.style.color = '#ef4444';
+          showToast('🎤 Microphone listening for ticket follow-up...');
+        };
+
+        ticketMediaRecorder.onstop = async () => {
+          isTicketRecording = false;
+          ticketChatMikeBtn.style.color = '';
+          stream.getTracks().forEach(t => t.stop());
+
+          const audioBlob = new Blob(ticketAudioChunks, { type: 'audio/wav' });
+          const formData = new FormData();
+          formData.append('audio', audioBlob, 'ticket_audio.wav');
+
+          try {
+            const res = await fetch(`${API_BASE}/api/transcribe`, {
+              method: 'POST',
+              body: formData
+            });
+            const data = await res.json();
+            if (data.text && data.text.trim()) {
+              ticketChatInput.value = data.text.trim();
+              showToast(`Transcribed: "${data.text.trim()}"`);
+              handleSendTicketChat(data.text.trim());
+            }
+          } catch (e) {
+            console.warn('Transcription error:', e);
+          }
+        };
+
+        ticketMediaRecorder.start();
+        return;
+      } catch (err) {
+        console.warn('MediaRecorder error:', err);
+      }
+    }
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.lang = 'en-US';
+      rec.onstart = () => {
+        ticketChatMikeBtn.style.color = '#ef4444';
+        showToast('Listening... Speak your ticket follow-up.');
+      };
+      rec.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        ticketChatInput.value = transcript;
+        showToast(`Heard: "${transcript}"`);
+        handleSendTicketChat(transcript);
+      };
+      rec.onerror = () => { ticketChatMikeBtn.style.color = ''; };
+      rec.onend = () => { ticketChatMikeBtn.style.color = ''; };
+      rec.start();
+    } else {
+      showToast('Microphone access is not supported in this browser.');
+    }
   }
 
   // =========================================================================
@@ -1442,6 +1686,31 @@ document.addEventListener('DOMContentLoaded', () => {
             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
           </svg>`;
       }
+    });
+  }
+
+  // Ticket Follow-Up Chat Form & Quick Chips Event Handlers
+  if (ticketChatForm) {
+    ticketChatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      handleSendTicketChat();
+    });
+  }
+
+  if (ticketChatMikeBtn) {
+    ticketChatMikeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleTicketSpeech();
+    });
+  }
+
+  if (ticketChatChips && ticketChatChips.length > 0) {
+    ticketChatChips.forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        e.preventDefault();
+        const msg = chip.getAttribute('data-msg');
+        if (msg) handleSendTicketChat(msg);
+      });
     });
   }
 

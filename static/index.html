@@ -449,60 +449,56 @@
                   <p id="resNotesText" style="font-size: 13.5px; color: #f0fdf4; line-height: 1.6; margin: 0; white-space: pre-line;"></p>
                 </div>
 
-                <!-- Request Summary Card (Matches Image 1) -->
-                <div class="request-summary-card" id="requestSummaryCard">
-                  <h4 class="request-summary-title">Request Summary</h4>
-                  
-                  <div class="resolution-time-row">
-                    <div class="clock-circle-icon">
-                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#ea580c" stroke-width="2.2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
+                <!-- AI TICKET FOLLOW-UP & APPEAL CHAT (Replaces old Request Summary) -->
+                <div class="ticket-chat-card" id="ticketChatCard">
+                  <div class="ticket-chat-header">
+                    <div class="ticket-chat-title-group">
+                      <div class="ticket-chat-icon">💬</div>
+                      <div>
+                        <h4 class="ticket-chat-title">Ticket Follow-Up & Appeal Assistant</h4>
+                        <p class="ticket-chat-subtitle">Not satisfied with the response or need more info? Chat directly with the AI about this ticket.</p>
+                      </div>
+                    </div>
+                    <span class="ticket-chat-tag" id="ticketChatContextBadge">RMS #CLASH-2026</span>
+                  </div>
+
+                  <!-- Quick Action Chips for Instant Help -->
+                  <div class="ticket-chat-chips">
+                    <button type="button" class="t-chip" data-msg="I am not satisfied with this resolution, please re-open my ticket for review.">⚠️ Not Satisfied (Re-open)</button>
+                    <button type="button" class="t-chip" data-msg="Can you explain the exact reason for this resolution?">❓ Explain Decision</button>
+                    <button type="button" class="t-chip" data-msg="When will my updated exam date sheet be active?">📅 Date Sheet Status</button>
+                    <button type="button" class="t-chip" data-msg="Can you expedite this request with the committee?">⚡ Expedite Request</button>
+                  </div>
+
+                  <!-- Message Stream -->
+                  <div class="ticket-chat-stream" id="ticketChatStream">
+                    <!-- Dynamic conversation messages injected here -->
+                  </div>
+
+                  <!-- Inline Follow-Up Input Dock -->
+                  <form class="ticket-chat-form" id="ticketChatForm" autocomplete="off">
+                    <input 
+                      type="text" 
+                      id="ticketChatInput" 
+                      class="ticket-chat-input" 
+                      placeholder="Ask a question or request an appeal on this ticket..."
+                      required
+                    />
+                    <button type="button" class="ticket-chat-mike-btn" id="ticketChatMikeBtn" title="Speak your question (Faster-Whisper)">
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
                       </svg>
-                    </div>
-                    <div class="resolution-time-text">
-                      <span class="est-label">Estimated Resolution Time</span>
-                      <strong class="est-value" id="summaryEstTime">2-3 Working Days</strong>
-                      <p class="est-sub">This is an approximate time and may vary based on the complexity of your issue.</p>
-                    </div>
-                  </div>
-
-                  <div class="route-to-section">
-                    <span class="route-to-label">Request will be routed to:</span>
-                    
-                    <div class="vertical-timeline" id="verticalTimeline">
-                      <!-- Stage 1 -->
-                      <div class="vt-stage vt-current">
-                        <div class="vt-dot-circle current"></div>
-                        <div class="vt-stage-content">
-                          <div class="vt-title-row">
-                            <strong class="vt-stage-name" id="vtCurrentStageName">Hostel Office</strong>
-                            <span class="vt-stage-badge">Today</span>
-                          </div>
-                          <span class="vt-stage-sub">Current Stage</span>
-                        </div>
-                      </div>
-                      <div class="vt-connector"></div>
-                      <!-- Stage 2 -->
-                      <div class="vt-stage vt-next">
-                        <div class="vt-dot-circle next"></div>
-                        <div class="vt-stage-content">
-                          <strong class="vt-stage-name" id="vtNextStageName">Dean (Hostel Affairs)</strong>
-                          <span class="vt-stage-sub">Next Stage</span>
-                        </div>
-                      </div>
-                      <div class="vt-connector"></div>
-                      <!-- Stage 3 -->
-                      <div class="vt-stage vt-final">
-                        <div class="vt-dot-circle final"></div>
-                        <div class="vt-stage-content">
-                          <strong class="vt-stage-name">Final Resolution</strong>
-                          <span class="vt-stage-sub">Expected</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
+                    </button>
+                    <button type="submit" class="ticket-chat-send-btn" id="ticketChatSendBtn" title="Send follow-up">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </button>
+                  </form>
                 </div>
 
               </div>

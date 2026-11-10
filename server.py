@@ -525,6 +525,170 @@ async def api_tickets(request):
         return JSONResponse({"tickets": [], "stats": {}, "error": str(e)})
 
 
+async def api_ticket_chat(request):
+    """
+    Interactive Ticket Follow-Up and Appeal AI Chat:
+    Fetches the specific ticket from university.db, understands all context (query, status,
+    assigned committee, and official human committee resolution notes), and holds an empathetic,
+    polite conversation with the student.
+    If the student expresses dissatisfaction or asks to re-open/appeal the ticket:
+    1. Re-opens the ticket status to 'APPEAL_UNDER_REVIEW'.
+    2. Updates stage progress to review stage.
+    3. Increments inquiry count and sets last_inquiry_at.
+    4. Logs the appeal into admin_audit_logs.
+    5. Returns an ultra-polite, reassuring response without em-dashes.
+    """
+    auth_uid = get_authenticated_student_id(request)
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+
+    ticket_id = (data.get("ticket_id") or "").strip()
+    user_query = (data.get("query") or "").strip()
+    param_reg = (data.get("reg_no") or "").strip()
+
+    student_id = auth_uid or param_reg
+    if not student_id:
+        return JSONResponse({"success": False, "error": "Authentication or student ID required."}, status_code=401)
+    if not ticket_id:
+        return JSONResponse({"success": False, "error": "Ticket ID is required."}, status_code=400)
+    if not user_query:
+        return JSONResponse({"success": False, "error": "Query message cannot be empty."}, status_code=400)
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM helpdesk_tickets WHERE ticket_id = ?", (ticket_id,))
+        ticket_row = cursor.fetchone()
+
+        if not ticket_row:
+            conn.close()
+            return JSONResponse({"success": False, "error": f"Ticket {ticket_id} not found."}, status_code=404)
+
+        ticket = dict(ticket_row)
+
+        # Cross-student ticket security check
+        if auth_uid and ticket.get("university_id") and ticket.get("university_id").strip() != auth_uid:
+            conn.close()
+            return JSONResponse({"success": False, "error": "Access Denied: Cross-student ticket inspection is strictly prohibited."}, status_code=403)
+
+        lower_query = user_query.lower()
+        dissatisfaction_keywords = [
+            "not satisfied", "unsatisfied", "dissatisfied", "not happy", "disagree",
+            "reopen", "re-open", "appeal", "escalate", "escalation", "wrong", "unfair",
+            "reject", "still an issue", "still facing", "still having", "not solved", "not resolved"
+        ]
+        is_dissatisfied = any(kw in lower_query for kw in dissatisfaction_keywords)
+        reopened = False
+        new_status = ticket.get("status", "In Progress")
+
+        if is_dissatisfied:
+            reopened = True
+            new_status = "APPEAL_UNDER_REVIEW"
+            new_stage_prog = 2
+            now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cursor.execute("""
+                UPDATE helpdesk_tickets
+                SET status = ?,
+                    stage_progress = ?,
+                    current_stage = ?,
+                    last_inquiry_at = ?,
+                    inquiry_count = COALESCE(inquiry_count, 0) + 1
+                WHERE ticket_id = ?
+            """, (new_status, new_stage_prog, "Higher Committee Review", now_str, ticket_id))
+            conn.commit()
+
+            # Record in admin audit log
+            try:
+                from core.admin_db import log_admin_action
+                log_admin_action(
+                    admin_id="STUDENT-PORTAL",
+                    username=ticket.get("student_name") or student_id,
+                    action="TICKET_APPEAL_FILED",
+                    target_ticket_id=ticket_id,
+                    details=f"Student registered dissatisfaction / appeal: '{user_query[:120]}'. Status updated to APPEAL_UNDER_REVIEW."
+                )
+            except Exception as e:
+                logger.warning(f"Failed to log audit action for appeal: {e}")
+
+        conn.close()
+
+        # Build context-aware prompt for AI
+        ticket_ctx = f"""TICKET CONTEXT:
+- Ticket ID: {ticket.get('ticket_id')}
+- Student Name: {ticket.get('student_name', 'Student')}
+- Category: {ticket.get('category', 'General Issue')}
+- Current Status: {new_status}
+- Original Student Query: {ticket.get('query_text', 'N/A')}
+- Assigned Committee / Officer: {ticket.get('assigned_officer', 'Central Helpdesk')}
+- Current Stage: {ticket.get('current_stage', 'In Review')}
+- Official Committee Resolution Notes: {ticket.get('human_resolution_notes') or 'Pending committee remarks'}
+- Is Appeal / Dissatisfied: {'Yes (Student has expressed dissatisfaction and requested an appeal)' if is_dissatisfied else 'No (General follow-up query)'}
+"""
+
+        prompt = f"""You are a courteous, empathetic student support representative for the university.
+A student is reviewing their RMS support ticket and has asked a follow-up query or expressed dissatisfaction.
+
+{ticket_ctx}
+
+STUDENT'S FOLLOW-UP MESSAGE:
+"{user_query}"
+
+CRITICAL INSTRUCTIONS:
+1. Speak in an exceptionally polite, respectful, warm, and professional tone.
+2. Emphasize that the authorities and committee are supportive, friendly, and here to help the student succeed.
+3. Reference the specific details of ticket #{ticket_id} (such as category, status, or resolution remarks) accurately without inventing facts, dates, or courses.
+4. If the student is dissatisfied or requested a re-open:
+   - Sincerely apologize for any inconvenience, difficulty, or frustration caused.
+   - Confirm clearly that their feedback has been recorded, the ticket has been re-opened, and its status is now updated to "APPEAL_UNDER_REVIEW" for immediate review by the higher committee.
+   - Reassure them that their academic continuity and satisfaction are our top priority.
+5. If the student has an informational question:
+   - Provide a clear, polite, and reassuring explanation based strictly on the ticket details.
+6. Keep your response concise and complete (between 3 to 7 lines).
+7. Do NOT use em-dashes anywhere in your response.
+
+Write the final response to be shown directly to the student:"""
+
+        try:
+            from config import client, AGENT_MODEL
+            res = client.chat.completions.create(
+                model=AGENT_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2
+            )
+            ai_reply = res.choices[0].message.content.strip()
+            ai_reply = ai_reply.replace("—", "-").replace("–", "-")
+        except Exception as e:
+            logger.error(f"Error calling LLM for ticket chat: {e}")
+            if is_dissatisfied:
+                ai_reply = (
+                    f"Dear {ticket.get('student_name', 'Student')}, we sincerely apologize for any inconvenience you have experienced. "
+                    f"We have registered your appeal regarding Ticket #{ticket_id} and updated its status to 'APPEAL_UNDER_REVIEW'. "
+                    f"The matter has been forwarded to the higher committee for urgent re-evaluation. "
+                    f"Rest assured, our university authorities are fully dedicated to supporting you and ensuring a fair and timely outcome."
+                )
+            else:
+                ai_reply = (
+                    f"Dear {ticket.get('student_name', 'Student')}, regarding Ticket #{ticket_id} ({ticket.get('category', 'Support Request')}), "
+                    f"your request is currently marked as '{new_status}' with {ticket.get('assigned_officer', 'our committee')}. "
+                    f"Please let us know if you require any further assistance, and we will be delighted to support you."
+                )
+
+        return JSONResponse({
+            "success": True,
+            "ticket_id": ticket_id,
+            "status": new_status,
+            "reopened": reopened,
+            "response": ai_reply
+        })
+
+    except Exception as e:
+        logger.error(f"Ticket chat error: {e}", exc_info=True)
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
 async def api_history(request):
     """Retrieves conversation history for the authenticated student only (IDOR protected)."""
     auth_uid = get_authenticated_student_id(request)
@@ -699,8 +863,7 @@ HUMAN COMMITTEE REMARK:
 "{raw_notes.strip()}"
 """
     try:
-        from core.llm_client import client
-        from config import AGENT_MODEL
+        from config import client, AGENT_MODEL
         res = client.chat.completions.create(
             model=AGENT_MODEL,
             messages=[{"role": "user", "content": prompt}],
@@ -1170,6 +1333,7 @@ routes = [
     Route("/api/query", api_query, methods=["POST"]),
     Route("/api/session", api_session, methods=["GET"]),
     Route("/api/tickets", api_tickets, methods=["GET"]),
+    Route("/api/ticket/chat", api_ticket_chat, methods=["POST"]),
     Route("/api/history", api_history, methods=["GET"]),
     Route("/api/transcribe", api_transcribe, methods=["POST"]),
     Route("/api/feedback", api_submit_feedback, methods=["POST"]),

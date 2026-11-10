@@ -2058,19 +2058,209 @@ input.dock-input:focus-visible {
 }
 
 /* ==========================================================================
-   REQUEST SUMMARY CARD (Exact match from Image 1)
+   TICKET FOLLOW-UP & APPEAL AI CHAT CARD (Interactive Dissatisfaction Chat)
    ========================================================================== */
-.request-summary-card {
-  background: rgba(255, 249, 246, 0.96);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+.ticket-chat-card {
+  background: rgba(18, 22, 31, 0.94);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-lg);
-  padding: 22px 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  color: #1c1917;
+  padding: 20px 22px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+  color: #f8fafc;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+}
+
+.ticket-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ticket-chat-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ticket-chat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.2), rgba(249, 115, 22, 0.15));
+  border: 1px solid rgba(234, 88, 12, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.ticket-chat-title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.ticket-chat-subtitle {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 2px 0 0 0;
+}
+
+.ticket-chat-tag {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.2);
+  color: #c7d2fe;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+}
+
+.ticket-chat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.t-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none !important;
+}
+
+.t-chip:hover {
+  background: rgba(234, 88, 12, 0.18);
+  border-color: rgba(234, 88, 12, 0.45);
+  color: #ffedd5;
+  transform: translateY(-1px);
+}
+
+.ticket-chat-stream {
+  min-height: 120px;
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 4px;
+}
+
+.ticket-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 88%;
+  font-size: 13px;
+  line-height: 1.5;
+  animation: fadeIn 0.2s ease;
+}
+
+.ticket-msg.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #df6d4d, #c2410c);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 14px 14px 2px 14px;
+  box-shadow: 0 4px 14px rgba(223, 109, 77, 0.25);
+}
+
+.ticket-msg.ai {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  padding: 10px 14px;
+  border-radius: 14px 14px 14px 2px;
+}
+
+.ticket-msg-meta {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 3px;
+  font-weight: 600;
+}
+
+.ticket-chat-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 6px 10px;
+  transition: all 0.2s ease;
+}
+
+.ticket-chat-form:focus-within {
+  border-color: rgba(223, 109, 77, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(223, 109, 77, 0.15);
+}
+
+.ticket-chat-input {
+  flex: 1;
+  background: transparent;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: #ffffff;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.ticket-chat-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ticket-chat-mike-btn,
+.ticket-chat-send-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  outline: none !important;
+}
+
+.ticket-chat-mike-btn:hover {
+  color: #ea580c;
+  background: rgba(234, 88, 12, 0.15);
+}
+
+.ticket-chat-send-btn {
+  background: linear-gradient(135deg, #df6d4d, #c2410c);
+  color: #ffffff;
+}
+
+.ticket-chat-send-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(223, 109, 77, 0.35);
+}
+
+/* Legacy request-summary-card retained for fallback */
+.request-summary-card {
+  display: none !important;
 }
 
 .request-summary-title {
