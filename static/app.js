@@ -1865,6 +1865,200 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // =========================================================================
+  // Draggable Sliding Window Carousel for Suggestion Cards
+  // =========================================================================
+  function initSuggestionSlider() {
+    const slider = document.getElementById('suggestionCardsSlider');
+    const prevBtn = document.getElementById('sliderPrevBtn');
+    const nextBtn = document.getElementById('sliderNextBtn');
+    const dotsContainer = document.getElementById('sliderDots');
+
+    if (!slider) return;
+
+    const cards = Array.from(slider.querySelectorAll('.suggestion-card'));
+    if (cards.length === 0) return;
+
+    // Create pagination indicator dots
+    if (dotsContainer) {
+      dotsContainer.innerHTML = '';
+      cards.forEach((card, index) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = `slider-dot ${index === 0 ? 'active' : ''}`;
+        const title = card.querySelector('.card-title')?.textContent || `Card ${index + 1}`;
+        dot.setAttribute('aria-label', `Navigate to ${title}`);
+        dot.setAttribute('title', title);
+        dot.addEventListener('click', (e) => {
+          e.preventDefault();
+          card.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+        });
+        dotsContainer.appendChild(dot);
+      });
+    }
+
+    const dots = dotsContainer ? Array.from(dotsContainer.querySelectorAll('.slider-dot')) : [];
+
+    // Update active dot and chevron button states
+    let scrollTicking = false;
+    const updateSliderState = () => {
+      const sliderRect = slider.getBoundingClientRect();
+      let activeIndex = 0;
+      let minDistance = Infinity;
+
+      cards.forEach((card, idx) => {
+        const cardRect = card.getBoundingClientRect();
+        const dist = Math.abs(cardRect.left - sliderRect.left);
+        if (dist < minDistance) {
+          minDistance = dist;
+          activeIndex = idx;
+        }
+      });
+
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === activeIndex);
+      });
+
+      if (prevBtn) {
+        const atStart = slider.scrollLeft <= 6;
+        prevBtn.disabled = atStart;
+        prevBtn.classList.toggle('disabled', atStart);
+      }
+
+      if (nextBtn) {
+        const atEnd = slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 10;
+        nextBtn.disabled = atEnd;
+        nextBtn.classList.toggle('disabled', atEnd);
+      }
+
+      scrollTicking = false;
+    };
+
+    slider.addEventListener('scroll', () => {
+      if (!scrollTicking) {
+        window.requestAnimationFrame(updateSliderState);
+        scrollTicking = true;
+      }
+    }, { passive: true });
+
+    window.addEventListener('resize', () => {
+      window.requestAnimationFrame(updateSliderState);
+    }, { passive: true });
+
+    // Prev / Next Chevron Navigation
+    if (prevBtn) {
+      prevBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const cardWidth = cards[0] ? cards[0].offsetWidth + 16 : 290;
+        slider.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const cardWidth = cards[0] ? cards[0].offsetWidth + 16 : 290;
+        slider.scrollBy({ left: cardWidth, behavior: 'smooth' });
+      });
+    }
+
+    // Mouse Dragging & Inertia
+    let isMouseDown = false;
+    let startX = 0;
+    let scrollStart = 0;
+    let hasDragged = false;
+    let suppressClick = false;
+
+    slider.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isMouseDown = true;
+      hasDragged = false;
+      startX = e.pageX - slider.offsetLeft;
+      scrollStart = slider.scrollLeft;
+      slider.classList.add('is-dragging');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isMouseDown) return;
+      const x = e.pageX - slider.offsetLeft;
+      const walk = (x - startX) * 1.35;
+      if (Math.abs(walk) > 6) {
+        hasDragged = true;
+      }
+      slider.scrollLeft = scrollStart - walk;
+    });
+
+    const stopDragging = () => {
+      if (!isMouseDown) return;
+      isMouseDown = false;
+      slider.classList.remove('is-dragging');
+      if (hasDragged) {
+        suppressClick = true;
+        setTimeout(() => {
+          suppressClick = false;
+          hasDragged = false;
+        }, 80);
+      }
+    };
+
+    window.addEventListener('mouseup', stopDragging);
+
+    // Touch Drag Click Protection
+    let touchStartX = 0;
+    let touchMoved = false;
+
+    slider.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches[0]) {
+        touchStartX = e.touches[0].pageX;
+        touchMoved = false;
+      }
+    }, { passive: true });
+
+    slider.addEventListener('touchmove', (e) => {
+      if (e.touches && e.touches[0]) {
+        const delta = Math.abs(e.touches[0].pageX - touchStartX);
+        if (delta > 8) {
+          touchMoved = true;
+        }
+      }
+    }, { passive: true });
+
+    slider.addEventListener('touchend', () => {
+      if (touchMoved) {
+        suppressClick = true;
+        setTimeout(() => {
+          suppressClick = false;
+          touchMoved = false;
+        }, 120);
+      }
+    });
+
+    // Capture phase click interceptor to prevent accidental card action when dragging
+    slider.addEventListener('click', (e) => {
+      if (suppressClick || hasDragged) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }
+    }, true);
+
+    // Keyboard Arrow Navigation
+    slider.addEventListener('keydown', (e) => {
+      const cardWidth = cards[0] ? cards[0].offsetWidth + 16 : 290;
+      if (e.key === 'ArrowRight') {
+        slider.scrollBy({ left: cardWidth, behavior: 'smooth' });
+      } else if (e.key === 'ArrowLeft') {
+        slider.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+      }
+    });
+
+    // Initial check
+    updateSliderState();
+  }
+
+  // Initialize Suggestion Slider
+  initSuggestionSlider();
+
   // Bootstrap Authentication
   checkAuthOnBoot();
 });

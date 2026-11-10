@@ -243,69 +243,159 @@
             <h1 class="hero-heading">We are ready to give answer to your Query</h1>
             <p class="hero-subheading">A thought, a story, a new beginning. Let's see where it takes us.</p>
 
-            <!-- 3 Frosted Glass Suggestion Cards (Exact matches from Image 1) -->
-            <div class="suggestion-cards-grid">
+            <!-- Draggable Sliding Window Carousel for Suggestion Cards -->
+            <div class="slider-window-wrapper">
               
-              <!-- Card 1: Ask your Query -->
-              <div class="suggestion-card" data-prompt="What is my current fee balance and hostel room allotment?">
-                <div class="card-header-row">
-                  <div class="card-icon-circle">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="9" y1="18" x2="15" y2="18"></line>
-                      <line x1="10" y1="22" x2="14" y2="22"></line>
-                      <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
-                    </svg>
+              <!-- Previous Slide Navigation Button -->
+              <button type="button" class="slider-nav-btn slider-prev" id="sliderPrevBtn" aria-label="Slide to previous cards" title="Previous cards">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+
+              <!-- Draggable Sliding Window Track -->
+              <div class="suggestion-cards-slider suggestion-cards-grid" id="suggestionCardsSlider" role="region" aria-label="Campus Quick Actions Carousel">
+                
+                <!-- Card 1: Ask your Query -->
+                <div class="suggestion-card" data-prompt="What is my current fee balance and hostel room allotment?">
+                  <div class="card-header-row">
+                    <div class="card-icon-circle">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="9" y1="18" x2="15" y2="18"></line>
+                        <line x1="10" y1="22" x2="14" y2="22"></line>
+                        <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                      </svg>
+                    </div>
+                    <div class="arrow-up-right">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7 7 17 7 17 17"></polyline>
+                      </svg>
+                    </div>
                   </div>
-                  <div class="arrow-up-right">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <line x1="7" y1="17" x2="17" y2="7"></line>
-                      <polyline points="7 7 17 7 17 17"></polyline>
-                    </svg>
-                  </div>
+                  <h2 class="card-title">Ask your Query</h2>
+                  <p class="card-desc">Find a fresh perspective on something curious.</p>
                 </div>
-                <h2 class="card-title">Ask your Query</h2>
-                <p class="card-desc">Find a fresh perspective on something curious.</p>
+
+                <!-- Card 2: Give Feedback -->
+                <div class="suggestion-card feedback-trigger-card" id="openFeedbackCard" role="button" tabindex="0" aria-label="Open student feedback form">
+                  <div class="card-header-row">
+                    <div class="card-icon-circle">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
+                    </div>
+                    <div class="arrow-up-right">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7 7 17 7 17 17"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                  <h2 class="card-title">Give Feedback</h2>
+                  <p class="card-desc">Rate your experience and share suggestions to improve campus services.</p>
+                </div>
+
+                <!-- Card 3: Track RMS Status -->
+                <div class="suggestion-card" id="cardTrackRms" role="button" tabindex="0" aria-label="Track your RMS requests and grievance status" data-prompt="What is the status of my active RMS tickets and grievances?">
+                  <div class="card-header-row">
+                    <div class="card-icon-circle">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                    </div>
+                    <div class="arrow-up-right">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7 7 17 7 17 17"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                  <h2 class="card-title">Track RMS Status</h2>
+                  <p class="card-desc">Monitor live resolution progress and assigned officer stages.</p>
+                </div>
+
+                <!-- Card 4: Exam Schedule & Seating -->
+                <div class="suggestion-card" data-prompt="Show my exam datesheets and seating desk arrangement">
+                  <div class="card-header-row">
+                    <div class="card-icon-circle">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                    </div>
+                    <div class="arrow-up-right">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7 7 17 7 17 17"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                  <h2 class="card-title">Exam Schedule & Seating</h2>
+                  <p class="card-desc">Check upcoming datesheets, room numbers, and desk allocations.</p>
+                </div>
+
+                <!-- Card 5: Academic Grievance Clash -->
+                <div class="suggestion-card" data-prompt="My exams are clashing on the same date. Can you just resolve that thing?">
+                  <div class="card-header-row">
+                    <div class="card-icon-circle">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                      </svg>
+                    </div>
+                    <div class="arrow-up-right">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7 7 17 7 17 17"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                  <h2 class="card-title">Resolve Exam Clash</h2>
+                  <p class="card-desc">Escalate exam date clashes and timetable discrepancies directly.</p>
+                </div>
+
+                <!-- Card 6: Internship & NOC -->
+                <div class="suggestion-card" data-prompt="What is the status of my internship file and NOC?">
+                  <div class="card-header-row">
+                    <div class="card-icon-circle">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                      </svg>
+                    </div>
+                    <div class="arrow-up-right">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7 7 17 7 17 17"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                  <h2 class="card-title">Internship & NOC</h2>
+                  <p class="card-desc">Track industry file approval, Dean sign-off, and NOC clearance.</p>
+                </div>
+
               </div>
 
-              <!-- Card 2: Give Feedback -->
-              <div class="suggestion-card feedback-trigger-card" id="openFeedbackCard" role="button" tabindex="0" aria-label="Open student feedback form">
-                <div class="card-header-row">
-                  <div class="card-icon-circle">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                    </svg>
-                  </div>
-                  <div class="arrow-up-right">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <line x1="7" y1="17" x2="17" y2="7"></line>
-                      <polyline points="7 7 17 7 17 17"></polyline>
-                    </svg>
-                  </div>
-                </div>
-                <h2 class="card-title">Give Feedback</h2>
-                <p class="card-desc">Rate your experience and share suggestions to improve campus services.</p>
-              </div>
+              <!-- Next Slide Navigation Button -->
+              <button type="button" class="slider-nav-btn slider-next" id="sliderNextBtn" aria-label="Slide to next cards" title="Next cards">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
 
-              <!-- Card 3: Track RMS Status -->
-              <div class="suggestion-card" id="cardTrackRms" role="button" tabindex="0" aria-label="Track your RMS requests and grievance status" data-prompt="What is the status of my active RMS tickets and grievances?">
-                <div class="card-header-row">
-                  <div class="card-icon-circle">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                  </div>
-                  <div class="arrow-up-right">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <line x1="7" y1="17" x2="17" y2="7"></line>
-                      <polyline points="7 7 17 7 17 17"></polyline>
-                    </svg>
-                  </div>
-                </div>
-                <h2 class="card-title">Track RMS Status</h2>
-                <p class="card-desc">Monitor live resolution progress and assigned officer stages.</p>
-              </div>
+            </div>
 
+            <!-- Slider Pagination Dots & Drag Hint -->
+            <div class="slider-footer-controls">
+              <span class="slider-drag-hint">↔ Drag or swipe horizontally to explore cards</span>
+              <div class="slider-dots" id="sliderDots">
+                <!-- Dots generated & updated via JS -->
+              </div>
             </div>
 
           </section>
