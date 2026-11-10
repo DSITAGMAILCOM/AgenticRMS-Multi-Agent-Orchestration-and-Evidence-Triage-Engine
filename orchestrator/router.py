@@ -46,7 +46,9 @@ EXAM_PATTERNS = [
 EDUREV_PATTERNS = [
     r"\binternships?\b", r"\bnoc\b", r"\bstipends?\b", r"\bcompany\b",
     r"\bcoordinator\b", r"\bindustrial\b", r"\bweekly\s*reports?\b",
-    r"\bedu[-_ ]?revolution\b", r"\bcareers?\b", r"\bplacements?\b"
+    r"\bedu[-_ ]?revolution\b", r"\bcareers?\b", r"\bplacements?\b",
+    r"\bnptel\b", r"\bmoocs?\b", r"\bcertifications?\b", r"\brpl\b",
+    r"\brevenue\s*generation\b", r"\bacademic\s*benefits?\b"
 ]
 
 ACADEMIC_PATTERNS = [
