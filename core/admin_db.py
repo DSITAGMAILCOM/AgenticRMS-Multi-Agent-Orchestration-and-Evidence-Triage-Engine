@@ -319,5 +319,129 @@ def get_recent_admin_audit_logs(limit: int = 50) -> List[Dict[str, Any]]:
     return rows
 
 
+def create_portal_credentials(
+    portal_type: str = "academic",
+    full_name: Optional[str] = None,
+    department: Optional[str] = None,
+    assigned_ticket_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Provisions dedicated access credentials in admin.db for either:
+    1. Academic Portal: Academic Teacher / Academic Course Evaluator
+    2. Administrative Portal: Support Officer / Exam Controller Administrator
+    """
+    conn = get_admin_db_connection()
+    cursor = conn.cursor()
+
+    suffix = secrets.token_hex(2)
+    is_academic = portal_type.lower() in ["academic", "teacher", "evaluator", "curriculum"]
+
+    if is_academic:
+        admin_id = f"ACAD-{secrets.token_hex(3).upper()}"
+        username = f"acad_teacher_{suffix}"
+        email = f"teacher_{suffix}@faculty.lpu.in"
+        role = "AcademicTeacher"
+        name = full_name or "Academic Evaluation Officer"
+        dept = department or "Academic Affairs & Timetable Coordination"
+        target_portal = "Academic Portal (/portal/academic)"
+        portal_key = "ACADEMIC_PORTAL"
+    else:
+        admin_id = f"ADM-{secrets.token_hex(3).upper()}"
+        username = f"admin_officer_{suffix}"
+        email = f"officer_{suffix}@admin.lpu.in"
+        role = "Administrator"
+        name = full_name or "Administrative Service Officer"
+        dept = department or "Central Administration & Helpdesk"
+        target_portal = "Administrator Portal (/portal/admin)"
+        portal_key = "ADMINISTRATIVE_PORTAL"
+
+    raw_password = f"{'Acad' if is_academic else 'Admin'}@RMS2026_{suffix}!"
+    p_hash, salt = hash_password(raw_password)
+
+    cursor.execute("""
+        INSERT INTO admin_users (admin_id, username, email, password_hash, salt, role, full_name, department, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+    """, (admin_id, username, email, p_hash, salt, role, name, dept))
+
+    log_details = f"Provisioned credentials for {target_portal} to handle ticket {assigned_ticket_id or 'GENERAL'}"
+    cursor.execute("""
+        INSERT INTO admin_audit_logs (admin_id, username, action, target_ticket_id, details)
+        VALUES (?, ?, 'CREDENTIAL_PROVISIONING', ?, ?)
+    """, (admin_id, username, assigned_ticket_id, log_details))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "admin_id": admin_id,
+        "username": username,
+        "email": email,
+        "temporary_password": raw_password,
+        "role": role,
+        "full_name": name,
+        "department": dept,
+        "target_portal": target_portal,
+        "portal_key": portal_key
+    }
+
+
+def record_central_test_log(
+    query_id: str,
+    student_id: str,
+    student_query: str,
+    response_text: str,
+    routing_path: str,
+    decision_rationale: str,
+    processing_time_seconds: float,
+    escalation_status: str = "RESOLVED",
+    assigned_portal: Optional[str] = None,
+    created_credentials: Optional[Dict[str, Any]] = None,
+    bottleneck_analysis: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Maintains a central test log in admin.db detailing end-to-end query handling,
+    routing trajectory, decision criteria, and latency diagnostics.
+    """
+    import json
+    conn = get_admin_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS central_test_logs (
+        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        query_id TEXT UNIQUE,
+        student_id TEXT,
+        student_query TEXT NOT NULL,
+        response_text TEXT NOT NULL,
+        routing_path TEXT NOT NULL,
+        decision_rationale TEXT NOT NULL,
+        processing_time_seconds REAL NOT NULL,
+        escalation_status TEXT,
+        assigned_portal TEXT,
+        created_credentials TEXT,
+        bottleneck_analysis TEXT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    cred_json = json.dumps(created_credentials) if created_credentials else None
+
+    cursor.execute("""
+        INSERT OR REPLACE INTO central_test_logs (
+            query_id, student_id, student_query, response_text,
+            routing_path, decision_rationale, processing_time_seconds,
+            escalation_status, assigned_portal, created_credentials, bottleneck_analysis
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        query_id, student_id, student_query, response_text,
+        routing_path, decision_rationale, round(processing_time_seconds, 4),
+        escalation_status, assigned_portal, cred_json, bottleneck_analysis
+    ))
+
+    conn.commit()
+    conn.close()
+    return {"status": "SUCCESS", "query_id": query_id}
+
+
 # Initialize database automatically upon module import
 init_admin_database()

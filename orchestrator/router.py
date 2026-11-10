@@ -182,12 +182,12 @@ def decompose_multi_query(raw_query: str, detected_domains: List[str]) -> List[D
     return [{"sub_query": raw_query, "domain": detected_domains[0] if detected_domains else "default"}]
 
 
-def dispatch_single_agent(domain: str, query: str, session: StudentSession) -> str:
+def dispatch_single_agent(domain: str, query: str, session: StudentSession, tracker: Optional[QueryTracker] = None) -> str:
     """Dispatches a single sub-query directly to its specialized domain agent."""
     if domain == "administration":
         return admin_agent.run(query, session=session)
     elif domain == "examination":
-        return exam_agent.run(query, session=session)
+        return exam_agent.run(query, session=session, tracker=tracker)
     elif domain == "academic":
         return academic_lead.run(query, session=session)
     elif domain == "edu_revolution":
@@ -197,6 +197,14 @@ def dispatch_single_agent(domain: str, query: str, session: StudentSession) -> s
         faq_ans = default_gateway_agent.check_faq(query)
         if faq_ans:
             return faq_ans
+
+        # Unhandled domain -> Escalate to default gateway
+        return default_gateway_agent.run(
+            query=query,
+            session=session,
+            tracker=tracker or QueryTracker(university_id=session.university_id, student_name=session.full_name, email=session.university_email, raw_query=query),
+            reason=f"No specialized domain agent matched for query: '{query}'"
+        )
 
         system_prompt = (
             f"You are the University Support Portal Assistant.\n"
@@ -283,7 +291,7 @@ def orchestrate_query(user_query: str, session: Optional[StudentSession] = None,
                     action_type="MULTI_QUERY_ROUTE",
                     payload={"sub_query": sq, "domain": s_dom}
                 )
-                raw_ans = dispatch_single_agent(s_dom, sq, session)
+                raw_ans = dispatch_single_agent(s_dom, sq, session, tracker=tracker)
 
                 # Clean badges and headers to maintain point-to-point brevity
                 clean_ans = re.sub(r"^⚡\s*\*\*\[Instant FAQ Deflection[^\]]*\]\*\*\s*", "", raw_ans, flags=re.IGNORECASE).strip()
@@ -305,7 +313,7 @@ def orchestrate_query(user_query: str, session: Optional[StudentSession] = None,
 
     try:
         tracker.log_hop("Top Orchestrator", f"{domain.title()}Agent", "ROUTING", payload={"domain": domain})
-        response = dispatch_single_agent(domain, cleaned_query, session)
+        response = dispatch_single_agent(domain, cleaned_query, session, tracker=tracker)
         tracker.finalize(resolution_type=f"AUTOMATED_{domain.upper()}")
         return response
     except Exception as e:
