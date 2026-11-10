@@ -243,21 +243,14 @@
             <h1 class="hero-heading">We are ready to give answer to your Query</h1>
             <p class="hero-subheading">A thought, a story, a new beginning. Let's see where it takes us.</p>
 
-            <!-- Draggable Sliding Window Carousel for Suggestion Cards -->
-            <div class="slider-window-wrapper">
+            <!-- Draggable 3D Rotating Cycle Carousel for Suggestion Cards -->
+            <div class="rotate-cycle-container" id="rotateCycleContainer">
               
-              <!-- Previous Slide Navigation Button -->
-              <button type="button" class="slider-nav-btn slider-prev" id="sliderPrevBtn" aria-label="Slide to previous cards" title="Previous cards">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-              </button>
-
-              <!-- Draggable Sliding Window Track -->
-              <div class="suggestion-cards-slider suggestion-cards-grid" id="suggestionCardsSlider" role="region" aria-label="Campus Quick Actions Carousel">
+              <!-- 3D Rotating Cycle Stage Track -->
+              <div class="rotate-cycle-stage" id="suggestionCardsSlider" role="region" aria-label="Campus Quick Actions 3D Rotate Cycle">
                 
                 <!-- Card 1: Ask your Query -->
-                <div class="suggestion-card" data-prompt="What is my current fee balance and hostel room allotment?">
+                <div class="suggestion-card rotate-cycle-card" data-index="0" data-prompt="What is my current fee balance and hostel room allotment?">
                   <div class="card-header-row">
                     <div class="card-icon-circle">
                       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -278,7 +271,7 @@
                 </div>
 
                 <!-- Card 2: Give Feedback -->
-                <div class="suggestion-card feedback-trigger-card" id="openFeedbackCard" role="button" tabindex="0" aria-label="Open student feedback form">
+                <div class="suggestion-card rotate-cycle-card feedback-trigger-card" id="openFeedbackCard" data-index="1" role="button" tabindex="0" aria-label="Open student feedback form">
                   <div class="card-header-row">
                     <div class="card-icon-circle">
                       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -297,7 +290,7 @@
                 </div>
 
                 <!-- Card 3: Track RMS Status -->
-                <div class="suggestion-card" id="cardTrackRms" role="button" tabindex="0" aria-label="Track your RMS requests and grievance status" data-prompt="What is the status of my active RMS tickets and grievances?">
+                <div class="suggestion-card rotate-cycle-card" id="cardTrackRms" data-index="2" role="button" tabindex="0" aria-label="Track your RMS requests and grievance status" data-prompt="What is the status of my active RMS tickets and grievances?">
                   <div class="card-header-row">
                     <div class="card-icon-circle">
                       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -317,7 +310,7 @@
                 </div>
 
                 <!-- Card 4: Exam Schedule & Seating -->
-                <div class="suggestion-card" data-prompt="Show my exam datesheets and seating desk arrangement">
+                <div class="suggestion-card rotate-cycle-card" data-index="3" data-prompt="Show my exam datesheets and seating desk arrangement">
                   <div class="card-header-row">
                     <div class="card-icon-circle">
                       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -339,7 +332,7 @@
                 </div>
 
                 <!-- Card 5: Academic Grievance Clash -->
-                <div class="suggestion-card" data-prompt="My exams are clashing on the same date. Can you just resolve that thing?">
+                <div class="suggestion-card rotate-cycle-card" data-index="4" data-prompt="My exams are clashing on the same date. Can you just resolve that thing?">
                   <div class="card-header-row">
                     <div class="card-icon-circle">
                       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -360,7 +353,7 @@
                 </div>
 
                 <!-- Card 6: Internship & NOC -->
-                <div class="suggestion-card" data-prompt="What is the status of my internship file and NOC?">
+                <div class="suggestion-card rotate-cycle-card" data-index="5" data-prompt="What is the status of my internship file and NOC?">
                   <div class="card-header-row">
                     <div class="card-icon-circle">
                       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -381,18 +374,16 @@
 
               </div>
 
-              <!-- Next Slide Navigation Button -->
-              <button type="button" class="slider-nav-btn slider-next" id="sliderNextBtn" aria-label="Slide to next cards" title="Next cards">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </button>
-
             </div>
 
-            <!-- Slider Pagination Dots & Drag Hint -->
+            <!-- Rotate Cycle Pagination Dots & Drag Hint (No Buttons) -->
             <div class="slider-footer-controls">
-              <span class="slider-drag-hint">↔ Drag or swipe horizontally to explore cards</span>
+              <span class="slider-drag-hint">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 16l-4-4m0 0l4-4m-4 4h18m-4 4l4-4m0 0l-4-4"></path>
+                </svg>
+                Drag with your mouse to rotate cycle
+              </span>
               <div class="slider-dots" id="sliderDots">
                 <!-- Dots generated & updated via JS -->
               </div>

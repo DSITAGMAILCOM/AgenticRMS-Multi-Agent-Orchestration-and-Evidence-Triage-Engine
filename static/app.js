@@ -1866,20 +1866,40 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // Draggable Sliding Window Carousel for Suggestion Cards
+  // 3D Rotating Cycle Carousel for Suggestion Cards (Pure Mouse/Touch Drag)
   // =========================================================================
   function initSuggestionSlider() {
     const slider = document.getElementById('suggestionCardsSlider');
-    const prevBtn = document.getElementById('sliderPrevBtn');
-    const nextBtn = document.getElementById('sliderNextBtn');
     const dotsContainer = document.getElementById('sliderDots');
 
     if (!slider) return;
 
     const cards = Array.from(slider.querySelectorAll('.suggestion-card'));
-    if (cards.length === 0) return;
+    const N = cards.length;
+    if (N === 0) return;
 
-    // Create pagination indicator dots
+    const stepAngle = 360 / N; // 60 degrees per card for 6 cards
+
+    function getRadius() {
+      const w = window.innerWidth;
+      if (w > 900) return 370;
+      if (w > 640) return 290;
+      return 210;
+    }
+
+    let R = getRadius();
+    let rotation = 0;          // Current rotation in degrees
+    let velocity = 0;          // Rotational velocity in deg/frame
+    let isDragging = false;
+    let startX = 0;
+    let lastX = 0;
+    let lastTime = 0;
+    let hasDragged = false;
+    let suppressClick = false;
+    let targetRotation = null;
+    let animFrameId = null;
+
+    // Build Pagination Dots
     if (dotsContainer) {
       dotsContainer.innerHTML = '';
       cards.forEach((card, index) => {
@@ -1887,11 +1907,11 @@ document.addEventListener('DOMContentLoaded', () => {
         dot.type = 'button';
         dot.className = `slider-dot ${index === 0 ? 'active' : ''}`;
         const title = card.querySelector('.card-title')?.textContent || `Card ${index + 1}`;
-        dot.setAttribute('aria-label', `Navigate to ${title}`);
+        dot.setAttribute('aria-label', `Rotate to ${title}`);
         dot.setAttribute('title', title);
         dot.addEventListener('click', (e) => {
           e.preventDefault();
-          card.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+          rotateToIndex(index);
         });
         dotsContainer.appendChild(dot);
       });
@@ -1899,161 +1919,266 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const dots = dotsContainer ? Array.from(dotsContainer.querySelectorAll('.slider-dot')) : [];
 
-    // Update active dot and chevron button states
-    let scrollTicking = false;
-    const updateSliderState = () => {
-      const sliderRect = slider.getBoundingClientRect();
-      let activeIndex = 0;
-      let minDistance = Infinity;
+    function rotateToIndex(index) {
+      const baseAngle = index * stepAngle;
+      let angle = (baseAngle + rotation) % 360;
+      if (angle < 0) angle += 360;
+      let relAngle = angle > 180 ? angle - 360 : angle;
+      targetRotation = rotation - relAngle;
+      velocity = 0;
+      startAnimation();
+    }
 
-      cards.forEach((card, idx) => {
-        const cardRect = card.getBoundingClientRect();
-        const dist = Math.abs(cardRect.left - sliderRect.left);
-        if (dist < minDistance) {
-          minDistance = dist;
-          activeIndex = idx;
+    // Render 3D Cylindrical Rotate Cycle
+    function renderCycle() {
+      let activeIndex = 0;
+      let minAbsAngle = Infinity;
+
+      cards.forEach((card, i) => {
+        const baseAngle = i * stepAngle;
+        let angle = (baseAngle + rotation) % 360;
+        if (angle < 0) angle += 360;
+        let relAngle = angle > 180 ? angle - 360 : angle; // range -180 to +180
+
+        const absAngle = Math.abs(relAngle);
+        if (absAngle < minAbsAngle) {
+          minAbsAngle = absAngle;
+          activeIndex = i;
         }
+
+        // 3D cylindrical coordinates
+        const rad = (relAngle * Math.PI) / 180;
+        const x = R * Math.sin(rad);
+        const z = R * Math.cos(rad) - R; // z=0 at front center, negative towards sides
+        const rotateY = relAngle * 0.72; // subtle inward tilt
+        const scale = 0.82 + 0.18 * Math.cos(rad);
+
+        // Visibility & Opacity falloff
+        let opacity = 1;
+        let isVisible = true;
+        let pointerEvents = 'auto';
+
+        if (absAngle > 95) {
+          opacity = 0;
+          isVisible = false;
+          pointerEvents = 'none';
+        } else if (absAngle > 58) {
+          opacity = Math.max(0, 1 - (absAngle - 58) / 37);
+          isVisible = opacity > 0.04;
+          pointerEvents = absAngle < 78 ? 'auto' : 'none';
+        }
+
+        const zIndex = Math.round(1000 + z);
+        const isCenter = absAngle < 28;
+
+        card.style.transform = `translate3d(${x.toFixed(1)}px, 0, ${z.toFixed(1)}px) rotateY(${rotateY.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
+        card.style.opacity = opacity.toFixed(2);
+        card.style.zIndex = zIndex;
+        card.style.visibility = isVisible ? 'visible' : 'hidden';
+        card.style.pointerEvents = pointerEvents;
+        card.classList.toggle('is-active-center', isCenter);
+        card.setAttribute('data-rel-angle', relAngle.toFixed(1));
       });
 
+      // Update Pagination Dots
       dots.forEach((dot, idx) => {
         dot.classList.toggle('active', idx === activeIndex);
       });
-
-      if (prevBtn) {
-        const atStart = slider.scrollLeft <= 6;
-        prevBtn.disabled = atStart;
-        prevBtn.classList.toggle('disabled', atStart);
-      }
-
-      if (nextBtn) {
-        const atEnd = slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 10;
-        nextBtn.disabled = atEnd;
-        nextBtn.classList.toggle('disabled', atEnd);
-      }
-
-      scrollTicking = false;
-    };
-
-    slider.addEventListener('scroll', () => {
-      if (!scrollTicking) {
-        window.requestAnimationFrame(updateSliderState);
-        scrollTicking = true;
-      }
-    }, { passive: true });
-
-    window.addEventListener('resize', () => {
-      window.requestAnimationFrame(updateSliderState);
-    }, { passive: true });
-
-    // Prev / Next Chevron Navigation
-    if (prevBtn) {
-      prevBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const cardWidth = cards[0] ? cards[0].offsetWidth + 16 : 290;
-        slider.scrollBy({ left: -cardWidth, behavior: 'smooth' });
-      });
     }
 
-    if (nextBtn) {
-      nextBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const cardWidth = cards[0] ? cards[0].offsetWidth + 16 : 290;
-        slider.scrollBy({ left: cardWidth, behavior: 'smooth' });
-      });
+    // Animation & Physics Loop (Momentum + Magnetic Snap)
+    function animate() {
+      let needsNextFrame = false;
+
+      if (!isDragging) {
+        if (Math.abs(velocity) > 0.08) {
+          rotation += velocity;
+          velocity *= 0.92; // smooth friction deceleration
+          needsNextFrame = true;
+        } else if (targetRotation !== null) {
+          const diff = targetRotation - rotation;
+          rotation += diff * 0.16; // critically damped spring
+          if (Math.abs(diff) < 0.05) {
+            rotation = targetRotation;
+            targetRotation = null;
+          } else {
+            needsNextFrame = true;
+          }
+        } else {
+          // Once velocity drops below threshold, magnetically snap to nearest card
+          const nearestStep = Math.round(rotation / stepAngle);
+          targetRotation = nearestStep * stepAngle;
+          needsNextFrame = true;
+        }
+      }
+
+      renderCycle();
+
+      if (needsNextFrame || isDragging) {
+        animFrameId = requestAnimationFrame(animate);
+      } else {
+        animFrameId = null;
+      }
     }
 
-    // Mouse Dragging & Inertia
-    let isMouseDown = false;
-    let startX = 0;
-    let scrollStart = 0;
-    let hasDragged = false;
-    let suppressClick = false;
+    function startAnimation() {
+      if (!animFrameId) {
+        animFrameId = requestAnimationFrame(animate);
+      }
+    }
 
+    // Direct Mouse Dragging
     slider.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
-      isMouseDown = true;
+      isDragging = true;
       hasDragged = false;
-      startX = e.pageX - slider.offsetLeft;
-      scrollStart = slider.scrollLeft;
+      targetRotation = null;
+      velocity = 0;
+      startX = e.clientX;
+      lastX = e.clientX;
+      lastTime = performance.now();
       slider.classList.add('is-dragging');
+      startAnimation();
     });
 
     window.addEventListener('mousemove', (e) => {
-      if (!isMouseDown) return;
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - startX) * 1.35;
-      if (Math.abs(walk) > 6) {
+      if (!isDragging) return;
+      const currentX = e.clientX;
+      const deltaX = currentX - lastX;
+      const now = performance.now();
+      const dt = Math.max(1, now - lastTime);
+
+      if (Math.abs(currentX - startX) > 5) {
         hasDragged = true;
       }
-      slider.scrollLeft = scrollStart - walk;
+
+      // Sensitivity: ~240px drag rotates one full card step
+      const sensitivity = 0.25;
+      rotation += deltaX * sensitivity;
+
+      const instantV = (deltaX / dt) * 16.6 * sensitivity;
+      velocity = velocity * 0.5 + instantV * 0.5;
+      velocity = Math.max(-14, Math.min(14, velocity));
+
+      lastX = currentX;
+      lastTime = now;
     });
 
-    const stopDragging = () => {
-      if (!isMouseDown) return;
-      isMouseDown = false;
+    const stopDrag = () => {
+      if (!isDragging) return;
+      isDragging = false;
       slider.classList.remove('is-dragging');
       if (hasDragged) {
         suppressClick = true;
         setTimeout(() => {
           suppressClick = false;
           hasDragged = false;
-        }, 80);
+        }, 90);
       }
+      startAnimation();
     };
 
-    window.addEventListener('mouseup', stopDragging);
+    window.addEventListener('mouseup', stopDrag);
 
-    // Touch Drag Click Protection
-    let touchStartX = 0;
-    let touchMoved = false;
-
+    // Touch Dragging (Mobile / Tablet)
     slider.addEventListener('touchstart', (e) => {
       if (e.touches && e.touches[0]) {
-        touchStartX = e.touches[0].pageX;
-        touchMoved = false;
+        isDragging = true;
+        hasDragged = false;
+        targetRotation = null;
+        velocity = 0;
+        startX = e.touches[0].clientX;
+        lastX = e.touches[0].clientX;
+        lastTime = performance.now();
+        slider.classList.add('is-dragging');
+        startAnimation();
       }
     }, { passive: true });
 
-    slider.addEventListener('touchmove', (e) => {
-      if (e.touches && e.touches[0]) {
-        const delta = Math.abs(e.touches[0].pageX - touchStartX);
-        if (delta > 8) {
-          touchMoved = true;
-        }
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging || !e.touches || !e.touches[0]) return;
+      const currentX = e.touches[0].clientX;
+      const deltaX = currentX - lastX;
+      const now = performance.now();
+      const dt = Math.max(1, now - lastTime);
+
+      if (Math.abs(currentX - startX) > 6) {
+        hasDragged = true;
       }
+
+      const sensitivity = 0.28;
+      rotation += deltaX * sensitivity;
+
+      const instantV = (deltaX / dt) * 16.6 * sensitivity;
+      velocity = velocity * 0.5 + instantV * 0.5;
+      velocity = Math.max(-14, Math.min(14, velocity));
+
+      lastX = currentX;
+      lastTime = now;
     }, { passive: true });
 
-    slider.addEventListener('touchend', () => {
-      if (touchMoved) {
-        suppressClick = true;
-        setTimeout(() => {
-          suppressClick = false;
-          touchMoved = false;
-        }, 120);
+    window.addEventListener('touchend', stopDrag);
+
+    // Trackpad / Horizontal Wheel Gesture Support
+    slider.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault();
+        targetRotation = null;
+        velocity = -e.deltaX * 0.05;
+        rotation += velocity;
+        startAnimation();
+      }
+    }, { passive: false });
+
+    // Keyboard Arrow Keys
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        targetRotation = (Math.round(rotation / stepAngle) - 1) * stepAngle;
+        velocity = 0;
+        startAnimation();
+      } else if (e.key === 'ArrowLeft') {
+        targetRotation = (Math.round(rotation / stepAngle) + 1) * stepAngle;
+        velocity = 0;
+        startAnimation();
       }
     });
 
-    // Capture phase click interceptor to prevent accidental card action when dragging
+    // Window Resize Handler to Adapt 3D Radius
+    window.addEventListener('resize', () => {
+      R = getRadius();
+      renderCycle();
+    }, { passive: true });
+
+    // Intercept Card Clicks
     slider.addEventListener('click', (e) => {
       if (suppressClick || hasDragged) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
+        return;
       }
+
+      const card = e.target.closest('.suggestion-card');
+      if (!card) return;
+
+      const relAngle = parseFloat(card.getAttribute('data-rel-angle') || '0');
+      // If user clicked a side card, smoothly rotate it to the center
+      if (Math.abs(relAngle) >= 25) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        targetRotation = rotation - relAngle;
+        velocity = 0;
+        startAnimation();
+      }
+      // If card is already in the front center (abs < 25), the click will proceed to trigger its action!
     }, true);
 
-    // Keyboard Arrow Navigation
-    slider.addEventListener('keydown', (e) => {
-      const cardWidth = cards[0] ? cards[0].offsetWidth + 16 : 290;
-      if (e.key === 'ArrowRight') {
-        slider.scrollBy({ left: cardWidth, behavior: 'smooth' });
-      } else if (e.key === 'ArrowLeft') {
-        slider.scrollBy({ left: -cardWidth, behavior: 'smooth' });
-      }
-    });
-
-    // Initial check
-    updateSliderState();
+    // Initial render
+    renderCycle();
   }
 
   // Initialize Suggestion Slider
