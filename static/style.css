@@ -1037,21 +1037,23 @@ body {
 .dock-attach-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   background: transparent;
   border: none;
   color: var(--dock-placeholder);
   cursor: pointer;
-  font-size: 0.84rem;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
+  padding: 8px;
+  border-radius: 50%;
   transition: color var(--transition-fast), background var(--transition-fast);
-  white-space: nowrap;
 }
 
 .dock-attach-btn:hover {
   color: var(--dock-text);
   background: rgba(0, 0, 0, 0.05);
+}
+
+.attach-label {
+  display: none !important;
 }
 
 /* Center Text Field */
@@ -1063,12 +1065,24 @@ body {
 .dock-input {
   width: 100%;
   background: transparent;
-  border: none;
-  outline: none;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   font-family: var(--font-body);
   font-size: 0.96rem;
   color: var(--dock-text);
   font-weight: 400;
+}
+
+.dock-input:focus,
+.dock-input:focus-visible,
+.dock-input:active,
+input.dock-input:focus,
+input.dock-input:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 .dock-input::placeholder {
@@ -2579,7 +2593,7 @@ body {
    ========================================================================== */
 
 /* Accessibility Focus States */
-:focus-visible {
+:focus-visible:not(.dock-input):not(#queryInput):not(.input-dock-form input) {
   outline: 2px solid #df6d4d !important;
   outline-offset: 2px !important;
 }
