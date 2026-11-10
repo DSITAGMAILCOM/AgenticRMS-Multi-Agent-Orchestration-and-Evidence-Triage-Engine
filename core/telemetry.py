@@ -75,20 +75,42 @@ def init_arize_telemetry() -> bool:
             os.environ["SPACE_ID"] = space_id
 
         if space_id:
-            from phoenix.otel import register
-            target_endpoint = endpoint or "https://otlp.arize.com/v1"
-            headers = {"space_id": space_id, "api_key": key}
-            _arize_tracer_provider = register(
-                project_name=project_name,
-                api_key=key,
-                endpoint=target_endpoint,
-                headers=headers,
-                auto_instrument=True,
-                batch=True,
-                set_global_tracer_provider=True,
-                verbose=False
-            )
-            GroqInstrumentor().instrument(tracer_provider=_arize_tracer_provider)
+            try:
+                from arize.otel import register, Endpoint
+                endpoint_val = Endpoint.ARIZE_EUROPE if not endpoint else endpoint
+                _arize_tracer_provider = register(
+                    space_id=space_id,
+                    api_key=key,
+                    project_name=project_name,
+                    endpoint=endpoint_val
+                )
+            except Exception:
+                from phoenix.otel import register
+                target_endpoint = endpoint or "https://otlp.eu-west-1a.arize.com/v1"
+                headers = {"space_id": space_id, "api_key": key}
+                _arize_tracer_provider = register(
+                    project_name=project_name,
+                    api_key=key,
+                    endpoint=target_endpoint,
+                    headers=headers,
+                    auto_instrument=True,
+                    batch=True,
+                    set_global_tracer_provider=True,
+                    verbose=False
+                )
+
+            # Instrument LangChain and Groq with the Arize provider
+            try:
+                from openinference.instrumentation.langchain import LangChainInstrumentor
+                LangChainInstrumentor().instrument(tracer_provider=_arize_tracer_provider)
+            except Exception:
+                pass
+
+            try:
+                from openinference.instrumentation.groq import GroqInstrumentor
+                GroqInstrumentor().instrument(tracer_provider=_arize_tracer_provider)
+            except Exception:
+                pass
         elif endpoint:
             from phoenix.otel import register
             _arize_tracer_provider = register(
@@ -100,7 +122,16 @@ def init_arize_telemetry() -> bool:
                 set_global_tracer_provider=True,
                 verbose=False
             )
-            GroqInstrumentor().instrument(tracer_provider=_arize_tracer_provider)
+            try:
+                from openinference.instrumentation.langchain import LangChainInstrumentor
+                LangChainInstrumentor().instrument(tracer_provider=_arize_tracer_provider)
+            except Exception:
+                pass
+            try:
+                from openinference.instrumentation.groq import GroqInstrumentor
+                GroqInstrumentor().instrument(tracer_provider=_arize_tracer_provider)
+            except Exception:
+                pass
         elif _is_local_collector_running():
             from phoenix.otel import register
             _arize_tracer_provider = register(
@@ -227,3 +258,13 @@ def instrument_groq_client(client_instance):
     client_instance.chat.completions.create = instrumented_create
     client_instance._is_telemetry_instrumented = True
     return client_instance
+
+
+def flush_telemetry():
+    """Flushes buffered OpenTelemetry spans to Arize Cloud."""
+    global _arize_tracer_provider
+    if _arize_tracer_provider and hasattr(_arize_tracer_provider, "force_flush"):
+        try:
+            _arize_tracer_provider.force_flush(timeout_millis=2000)
+        except Exception:
+            pass

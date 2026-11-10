@@ -24,7 +24,7 @@ from starlette.middleware.cors import CORSMiddleware
 from config import DB_PATH, console
 from core.session import StudentSession
 from core.tracker import QueryTracker
-from core.telemetry import track_query_telemetry, is_arize_configured
+from core.telemetry import track_query_telemetry, is_arize_configured, flush_telemetry
 from orchestrator.router import orchestrate_query, clean_query, active_gate_classify, detect_all_matching_domains
 from core.rms_handler import detect_rms_intent, handle_tracking_query, handle_history_query, create_automated_rms_ticket
 from core.stt import transcribe_audio_file
@@ -350,6 +350,7 @@ async def api_query(request):
         if not auth_uid:
             tok = generate_student_token(session.university_id)
             resp.set_cookie("student_session_token", tok, httponly=False, samesite="lax", max_age=86400)
+        flush_telemetry()
         return resp
 
     except Exception as e:
