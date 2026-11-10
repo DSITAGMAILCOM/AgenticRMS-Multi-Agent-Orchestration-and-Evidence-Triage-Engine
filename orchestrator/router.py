@@ -40,7 +40,8 @@ EXAM_PATTERNS = [
     r"\bexams?\b", r"\bexaminations?\b", r"\bhall\s*tickets?\b",
     r"\bdatesheets?\b", r"\bdate\s*sheets?\b", r"\badmit\s*cards?\b",
     r"\bseatings?\b", r"\bdesks?\b", r"\bre-?eval\b", r"\bbacklogs?\b",
-    r"\bgrades?\b", r"\bcgpa\b", r"\bsgpa\b", r"\bresults?\b", r"\bmarks\b"
+    r"\bgrades?\b", r"\bcgpa\b", r"\bsgpa\b", r"\bresults?\b", r"\bmarks\b",
+    r"\bexam\s*schedules?\b", r"\bexam\s*timings?\b"
 ]
 
 EDUREV_PATTERNS = [
@@ -55,7 +56,7 @@ ACADEMIC_PATTERNS = [
     r"\bcourses?\b", r"\bsyllabus\b", r"\bsyllabi\b", r"\bcurriculum\b",
     r"\bcredits?\b", r"\bprofessors?\b", r"\bfacult(?:y|ies)\b",
     r"\binstructors?\b", r"\bmentors?\b", r"\battendance\b",
-    r"\bsubjects?\b", r"\blabs?\b", r"\bschedules?\b", r"\btimetables?\b",
+    r"\bsubjects?\b", r"\blabs?\b", r"(?<!exam\s)(?<!examination\s)\bschedules?\b", r"\btimetables?\b",
     r"\bclassrooms?\b", r"\bengineering\b", r"\bcomputer\s*science\b"
 ]
 
@@ -83,14 +84,21 @@ def detect_all_matching_domains(query: str) -> List[str]:
     if any(re.search(pat, q) for pat in ADMIN_PATTERNS) or re.fullmatch(r"\d{5,12}", q):
         matched.append("administration")
 
-    if any(re.search(pat, q) for pat in EXAM_PATTERNS):
+    is_exam = any(re.search(pat, q) for pat in EXAM_PATTERNS)
+    if is_exam:
         matched.append("examination")
 
     if any(re.search(pat, q) for pat in EDUREV_PATTERNS):
         matched.append("edu_revolution")
 
-    if any(re.search(pat, q) for pat in ACADEMIC_PATTERNS):
-        matched.append("academic")
+    academic_matches = [pat for pat in ACADEMIC_PATTERNS if re.search(pat, q)]
+    if academic_matches:
+        if all(re.search(r"schedules?", m) for m in academic_matches) and is_exam:
+            pass
+        elif all(re.search(r"credits?", m) for m in academic_matches) and is_exam and not re.search(r"\b(limit|minimum|maximum|load|drop|add|register|electives?)\b", q):
+            pass
+        else:
+            matched.append("academic")
 
     return matched
 
@@ -164,7 +172,8 @@ def decompose_multi_query(raw_query: str, detected_domains: List[str]) -> List[D
                             "sub_query": str(item["sub_query"]).strip(),
                             "domain": str(item["domain"]).strip().lower()
                         })
-                if len(valid_parsed) >= 2:
+                distinct_domains = set(item["domain"] for item in valid_parsed if item["domain"] in detected_domains)
+                if len(valid_parsed) >= 2 and len(distinct_domains) >= 2:
                     return valid_parsed
     except Exception as e:
         console.print(f"[dim red]Decomposition fallback note: {e}[/dim red]")
@@ -256,10 +265,7 @@ def orchestrate_query(user_query: str, session: Optional[StudentSession] = None,
             return res["markdown"]
 
     # Step 4: Multi-Query vs Single-Query Branching
-    is_multi_query = len(detected_domains) > 1 or (
-        any(sep in user_query.lower() for sep in [" and also ", " as well as ", " and what ", " and when ", " and who ", " and how "])
-        and len(detected_domains) >= 1
-    )
+    is_multi_query = len(detected_domains) > 1
 
     if is_multi_query:
         console.print(f"[bold magenta]🔀 [Multi-Query Orchestrator] Detected Domains: {[d.upper() for d in detected_domains]}[/bold magenta]")

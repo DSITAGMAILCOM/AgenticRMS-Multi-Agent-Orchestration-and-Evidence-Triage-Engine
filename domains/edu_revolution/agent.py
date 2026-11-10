@@ -123,7 +123,7 @@ class EduRevolutionAgent:
         # Step 2: High-Speed Pre-fetch of Live Student Internship Records
         internship_data_snippet = ""
         try:
-            intern_records = run_db_query(f"SELECT company_name, role_title, stipend, noc_status, hod_approval, dean_approval, coordinator_name, coordinator_cabin, submission_date FROM internship_files WHERE university_id = '{session.university_id}'", authenticated_student_id=session.university_id)
+            intern_records = run_db_query(f"SELECT file_id, company_name, role_title, internship_type, stipend_monthly, file_status, current_desk, hod_approval, dean_approval, noc_issued, coordinator_name, coordinator_cabin, remarks FROM internship_files WHERE university_id = '{session.university_id}'", authenticated_student_id=session.university_id)
             internship_data_snippet = f"\nLIVE STUDENT INTERNSHIP RECORDS (From University Database):\n{intern_records}\n"
         except Exception:
             internship_data_snippet = ""
@@ -137,9 +137,9 @@ STUDENT PROFILE:
 - Registration ID: {session.university_id}
 {internship_data_snippet}
 Instructions:
-1. Provide the FULL, COMPLETE answer with all essential details (e.g., company name, role, stipend, NOC status, HOD/Dean approvals, coordinator name, cabin location, or eligibility rules). Never give partial or half answers.
-2. Structure the full information cleanly in about 3 to 4 compact lines or bullet points.
-3. Do not write multi-page essays or long unstructured paragraphs.
+1. Provide the FULL, COMPLETE, and ACCURATE response containing ALL relevant information from the database (file ID, company name, role title, internship type, monthly stipend, file status, current desk, HOD approval, Dean approval, NOC issuance status, coordinator name and cabin location, and remarks). Never omit any field or give partial or half answers.
+2. Structure the information cleanly in concise, professional bullet points or a compact table.
+3. Keep the response direct, authoritative, and focused—do not write lengthy multi-page essays, and avoid unnecessary conversational padding.
 4. If the student asks about their personal internship file, NOC status, or coordinator, synthesize directly from the LIVE RECORDS above.
 5. If asking about policies, NPTEL equivalence, or guidelines, use `search_internship_guidelines`.
 """

@@ -119,8 +119,8 @@ STUDENT PROFILE:
 
 RESPONSIBILITIES:
 1. Route the academic query to the appropriate faculty tool (e.g., `consult_engineering_faculty`).
-2. Provide the FULL, COMPLETE answer with all essential academic facts (course codes, syllabus topics, schedules, credits, or faculty advice). Never give partial or half answers.
-3. Format the response cleanly in about 3 to 4 compact, professional lines or bullet points without long multi-page essays.
+2. Provide the FULL, COMPLETE, and ACCURATE response containing ALL relevant academic details from the database and syllabus (course codes, titles, instructors, schedules, room numbers, credits, or curriculum advice). Never omit any field or give partial or half answers.
+3. Structure the response cleanly in concise bullet points or a compact table—do not write lengthy multi-page essays, and avoid unnecessary conversational padding.
 """
         messages = [
             {"role": "system", "content": lead_prompt},

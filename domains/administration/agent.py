@@ -162,9 +162,9 @@ class AdminAgent:
             f"Student: {name} (Registration No: {reg_no}).\n"
             f"{fee_snippet}\n"
             f"Instructions:\n"
-            f"1. Provide the FULL, COMPLETE answer with all essential financial and residential details (total fee, paid amount, pending balance, due date, payment status, scholarship waiver, hostel block, room number, warden name). Never give partial or half answers.\n"
-            f"2. Format the response cleanly in about 3 to 4 compact, structured lines or bullet points.\n"
-            f"3. Do not write long multi-page essays or verbose boilerplate. Maintain a professional, authoritative university tone.\n"
+            f"1. Provide the FULL, COMPLETE, and ACCURATE response containing ALL relevant financial and residential details from the database (total term fee, paid amount, pending balance/dues, due date, payment status, scholarship name, scholarship waiver, hostel block, room number, room type, warden name). Never omit any field or give partial or half answers.\n"
+            f"2. Structure the information cleanly in concise bullet points or a compact table.\n"
+            f"3. Keep the response direct, authoritative, and focused—do not make it a full one-page essay, and avoid conversational filler.\n"
             f"4. Never ask for credentials or registration number."
         )
 

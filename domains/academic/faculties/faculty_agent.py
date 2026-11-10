@@ -51,8 +51,8 @@ class FacultyAgent:
                 "content": f"You are the Dean/Lead Agent for {self.faculty_name}. "
                            f"Manage inquiries across departments: {dept_options}. "
                            f"Use `search_department_syllabus` for course outlines and `query_course_database` for class schedules. "
-                           f"Provide the FULL, COMPLETE answer with all essential details (course title, credits, room, instructor, syllabus modules). Never give partial or half answers. "
-                           f"Format the full response cleanly in about 3 to 4 compact lines or bullet points without long multi-page essays."
+                           f"Provide the FULL, COMPLETE, and ACCURATE response containing ALL relevant details from the database and syllabus (course code, title, credits, room, instructor, class schedule, syllabus topics). Never omit any field or give partial or half answers. "
+                           f"Structure the response cleanly in concise bullet points or a compact table without lengthy multi-page essays or conversational padding."
             },
             {"role": "user", "content": query}
         ]

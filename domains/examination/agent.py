@@ -152,8 +152,8 @@ class ExaminationAgent:
             datesheet_sql = f"SELECT course_code, exam_type, exam_date, session_time, venue_center FROM exam_datesheets WHERE course_code IN ({courses_str})" if courses_str else "SELECT 1 WHERE 0"
             datesheets = run_db_query(datesheet_sql, authenticated_student_id=session.university_id)
             seating = run_db_query(f"SELECT course_code, room_no, desk_no, invigilator_name FROM seating_arrangements WHERE university_id = '{session.university_id}'", authenticated_student_id=session.university_id)
-            grades = run_db_query(f"SELECT course_code, course_name, credits, grade, grade_point FROM grade_records WHERE university_id = '{session.university_id}'", authenticated_student_id=session.university_id)
-            exam_data_snippet = f"\nLIVE STUDENT EXAM & GRADE RECORDS (From University Database):\n- Enrolled Exam Datesheet: {datesheets}\n- Seating Hall Allocation: {seating}\n- Grades: {grades}\n"
+            grades = run_db_query(f"SELECT course_code, grade, credits, semester FROM grade_records WHERE university_id = '{session.university_id}'", authenticated_student_id=session.university_id)
+            exam_data_snippet = f"\nLIVE STUDENT EXAM & GRADE RECORDS (From University Database):\n- Enrolled Exam Datesheet: {datesheets}\n- Seating Hall Allocation: {seating}\n- Past Grade Records: {grades}\n"
         except Exception:
             exam_data_snippet = ""
 
@@ -181,11 +181,12 @@ STUDENT PROFILE:
 - Enrolled Courses: {', '.join(session.enrolled_courses)}
 {exam_data_snippet}
 Instructions:
-1. Provide the FULL, COMPLETE answer with all essential details (e.g., all scheduled courses, exam types, dates, times, venues, room numbers, desks, invigilators, or complete grade bands). Never give partial or half answers.
-2. Format the response cleanly in about 3 to 4 compact, structured lines, bullet points, or a neat table.
-3. Do not write long multi-page essays or verbose boilerplate. Deliver all required facts in a direct, professional manner.
-4. If the student asks about their exam schedule, seating hall, or grades, synthesize directly from the LIVE RECORDS above.
-5. Cite the official university grading scale or database record where applicable.
+1. Provide the FULL, COMPLETE, and ACCURATE response containing ALL relevant information from the database (all enrolled courses, exam types, dates, times, venues, room numbers, desk numbers, invigilators, past grades, credits, semesters). Never omit any field or course, and never provide partial or half answers.
+2. For exam schedules, account for every enrolled course: list details for courses with scheduled exams, and if an enrolled course has no exam scheduled in the database, explicitly note that.
+3. Structure the output cleanly in a compact Markdown table or organized bullet points.
+4. Keep the response concise, authoritative, and direct—do not make it a full one-page essay, and avoid conversational filler.
+5. If the student asks about their exam schedule, seating hall, or grades, synthesize directly from the LIVE RECORDS above.
+6. Cite the official university grading scale or database record where applicable.
 """
         messages = [
             {"role": "system", "content": system_prompt},
