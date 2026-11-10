@@ -544,7 +544,12 @@ document.addEventListener('DOMContentLoaded', () => {
           isFaq: data.is_faq,
           hops: data.total_hops,
           action: data.action,
-          ticketId: data.ticket_id
+          ticketId: data.ticket_id,
+          tokens: data.telemetry?.total_tokens,
+          promptTokens: data.telemetry?.prompt_tokens,
+          completionTokens: data.telemetry?.completion_tokens,
+          latencyMs: data.telemetry?.latency_ms,
+          arizeActive: data.telemetry?.arize_active
         });
         await loadTickets();
         if (data.action === 'OPEN_TRACKER' && data.ticket_id) {
@@ -636,6 +641,19 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
 
+    let telemetryHtml = '';
+    if (meta.latencyMs || meta.tokens) {
+      telemetryHtml = `
+        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; font-size: 11px; color: rgba(255,255,255,0.45); flex-wrap: wrap;">
+          <span>⏱️ ${meta.latencyMs ? meta.latencyMs + 'ms' : 'Fast'}</span>
+          <span>•</span>
+          <span>⚡ ${meta.tokens || 0} tokens</span>
+          <span>•</span>
+          <span style="color: #34d399;">🔭 Arize Tracked</span>
+        </div>
+      `;
+    }
+
     row.innerHTML = `
       <div class="agent-avatar-disc">${domainIcon}</div>
       <div class="bubble-agent">
@@ -646,6 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="agent-content-body">
           ${formattedContent}
           ${actionBtnHtml}
+          ${telemetryHtml}
         </div>
       </div>
     `;

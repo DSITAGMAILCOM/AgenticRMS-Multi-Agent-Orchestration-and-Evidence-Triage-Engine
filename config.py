@@ -52,6 +52,19 @@ if not GROQ_API_KEY or GROQ_API_KEY.startswith("gsk_your_groq"):
 
 client = Groq(api_key=GROQ_API_KEY or "dummy_key_to_prevent_init_crash")
 
+# 2.1 Arize Observability & OpenTelemetry Instrumentation
+try:
+    from core.telemetry import init_arize_telemetry, instrument_groq_client, is_arize_configured
+    if is_arize_configured():
+        arize_ok = init_arize_telemetry()
+        if arize_ok:
+            console.print("[bold spring_green3]🔭 Arize Observability: Connected & Tracing Groq LLM Calls[/bold spring_green3]")
+        else:
+            console.print("[bold yellow]🔭 Arize Observability: Key detected, OpenInference local active[/bold yellow]")
+    client = instrument_groq_client(client)
+except Exception as e:
+    console.print(f"[dim yellow]Telemetry init notice: {e}[/dim yellow]")
+
 # 3. Fixed Model Definition (Locked strictly to gpt-oss-20b)
 ACTIVE_MODEL = "openai/gpt-oss-20b"
 AGENT_MODEL = ACTIVE_MODEL

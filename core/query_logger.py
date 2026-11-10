@@ -81,9 +81,24 @@ def ensure_multi_location_tables():
                 query_text TEXT NOT NULL,
                 response_text TEXT,
                 status TEXT DEFAULT 'IN_PROGRESS',
+                prompt_tokens INTEGER DEFAULT 0,
+                completion_tokens INTEGER DEFAULT 0,
+                total_tokens INTEGER DEFAULT 0,
+                latency_ms REAL DEFAULT 0.0,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Ensure migration columns
+        for col_def in [
+            ("prompt_tokens", "INTEGER DEFAULT 0"),
+            ("completion_tokens", "INTEGER DEFAULT 0"),
+            ("total_tokens", "INTEGER DEFAULT 0"),
+            ("latency_ms", "REAL DEFAULT 0.0")
+        ]:
+            try:
+                cursor_admin.execute(f"ALTER TABLE admin_query_records ADD COLUMN {col_def[0]} {col_def[1]}")
+            except Exception:
+                pass
         conn_admin.commit()
         conn_admin.close()
     except Exception as e:
@@ -103,9 +118,24 @@ def ensure_multi_location_tables():
                 university_email TEXT NOT NULL,
                 query_text TEXT NOT NULL,
                 response_text TEXT,
+                prompt_tokens INTEGER DEFAULT 0,
+                completion_tokens INTEGER DEFAULT 0,
+                total_tokens INTEGER DEFAULT 0,
+                latency_ms REAL DEFAULT 0.0,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Ensure migration columns
+        for col_def in [
+            ("prompt_tokens", "INTEGER DEFAULT 0"),
+            ("completion_tokens", "INTEGER DEFAULT 0"),
+            ("total_tokens", "INTEGER DEFAULT 0"),
+            ("latency_ms", "REAL DEFAULT 0.0")
+        ]:
+            try:
+                cursor_univ.execute(f"ALTER TABLE student_queries ADD COLUMN {col_def[0]} {col_def[1]}")
+            except Exception:
+                pass
         conn_univ.commit()
         conn_univ.close()
     except Exception as e:
@@ -138,14 +168,19 @@ def log_query_across_all_locations(
     four_digit_number: Optional[str] = None,
     ticket_id: Optional[str] = None,
     query_id: Optional[str] = None,
-    routed_to_default_gateway: bool = False
+    routed_to_default_gateway: bool = False,
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    total_tokens: int = 0,
+    latency_ms: float = 0.0
 ) -> Dict[str, Any]:
     """
     Records the query in all three required storage locations:
     1. RMS History (helpdesk_tickets & query_audit_logs in university.db)
     2. Admin Portal (admin_query_records & admin_audit_logs in admin.db)
     3. Student Database (students & student_queries in university.db),
-       with the university email in `student_name_four_digit_number@lpu.in` format.
+       with the university email in `student_name_four_digit_number@lpu.in` format
+       and full telemetry (prompt/completion/total tokens & latency).
 
     Status Rule:
     - Queries routed to default gateway (unhandled by AI agent) -> status = 'in-progress'
@@ -158,6 +193,8 @@ def log_query_across_all_locations(
         ticket_id = f"RMS{datetime.datetime.now().strftime('%Y%m%d')}{secrets.token_hex(2).upper()}"
     if not query_id:
         query_id = f"QRY-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(2).upper()}"
+
+    total_tok = int(total_tokens or (prompt_tokens + completion_tokens))
 
     # Calculate exact formatted email ID: student_name_four_digit_number@lpu.in
     university_email = format_student_university_email(
@@ -231,21 +268,25 @@ def log_query_across_all_locations(
             res_notes, current_stage, stage_progress
         ))
 
-        # Insert into query_audit_logs
+        # Insert into query_audit_logs with token metrics
         cur_rms.execute("""
             INSERT OR REPLACE INTO query_audit_logs (
                 query_id, university_id, student_name, university_email,
                 raw_query, final_resolution_type, ticket_id, total_hops,
-                full_trajectory, created_at
+                full_trajectory, prompt_tokens, completion_tokens,
+                total_tokens, latency_ms, created_at
             ) VALUES (
                 ?, ?, ?, ?,
                 ?, ?, ?, 1,
-                ?, CURRENT_TIMESTAMP
+                ?, ?, ?,
+                ?, ?, CURRENT_TIMESTAMP
             )
         """, (
             query_id, str(university_id).strip(), student_name, university_email,
             query_text, resolution_type, ticket_id,
-            f"Top Orchestrator ➔ {category} ➔ {'Resolution Completed' if not routed_to_default_gateway else 'In Progress'}"
+            f"Top Orchestrator ➔ {category} ➔ {'Resolution Completed' if not routed_to_default_gateway else 'In Progress'}",
+            int(prompt_tokens or 0), int(completion_tokens or 0),
+            total_tok, float(latency_ms or 0.0)
         ))
         conn_rms.commit()
         conn_rms.close()
@@ -259,15 +300,18 @@ def log_query_across_all_locations(
         conn_admin = sqlite3.connect(ADMIN_DB_PATH)
         cur_admin = conn_admin.cursor()
 
-        # Record in admin_query_records
+        # Record in admin_query_records with tokens & latency
         cur_admin.execute("""
             INSERT INTO admin_query_records (
                 ticket_id, query_id, university_id, student_name,
-                university_email, query_text, response_text, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                university_email, query_text, response_text, status,
+                prompt_tokens, completion_tokens, total_tokens, latency_ms
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             ticket_id, query_id, str(university_id).strip(), student_name,
-            university_email, query_text, response_text, admin_status
+            university_email, query_text, response_text, admin_status,
+            int(prompt_tokens or 0), int(completion_tokens or 0),
+            total_tok, float(latency_ms or 0.0)
         ))
 
         # Record in admin_audit_logs
@@ -279,7 +323,7 @@ def log_query_across_all_locations(
             )
         """, (
             ticket_id,
-            f"Student {student_name} ({university_email}) submitted query: {query_text[:120]}"
+            f"Student {student_name} ({university_email}) query processed: {total_tok} tokens, {latency_ms}ms"
         ))
         conn_admin.commit()
         conn_admin.close()
@@ -300,15 +344,18 @@ def log_query_across_all_locations(
             WHERE university_id = ? OR LOWER(full_name) = LOWER(?)
         """, (university_email, str(university_id).strip(), student_name.strip()))
 
-        # Record in student_queries
+        # Record in student_queries with tokens & latency
         cur_stu.execute("""
             INSERT INTO student_queries (
                 query_id, ticket_id, university_id, student_name,
-                university_email, query_text, response_text
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                university_email, query_text, response_text,
+                prompt_tokens, completion_tokens, total_tokens, latency_ms
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             query_id, ticket_id, str(university_id).strip(), student_name,
-            university_email, query_text, response_text
+            university_email, query_text, response_text,
+            int(prompt_tokens or 0), int(completion_tokens or 0),
+            total_tok, float(latency_ms or 0.0)
         ))
         conn_stu.commit()
         conn_stu.close()
@@ -321,5 +368,11 @@ def log_query_across_all_locations(
         "query_id": query_id,
         "university_email": university_email,
         "category": category,
-        "assigned_officer": officer
+        "assigned_officer": officer,
+        "tokens": {
+            "prompt_tokens": int(prompt_tokens or 0),
+            "completion_tokens": int(completion_tokens or 0),
+            "total_tokens": total_tok
+        },
+        "latency_ms": float(latency_ms or 0.0)
     }

@@ -138,6 +138,11 @@ def init_db():
         ticket_id TEXT,
         total_hops INTEGER DEFAULT 0,
         full_trajectory TEXT NOT NULL,
+        prompt_tokens INTEGER DEFAULT 0,
+        completion_tokens INTEGER DEFAULT 0,
+        total_tokens INTEGER DEFAULT 0,
+        latency_ms REAL DEFAULT 0.0,
+        arize_trace_id TEXT DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 

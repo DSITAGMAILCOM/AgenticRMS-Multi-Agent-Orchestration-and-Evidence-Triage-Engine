@@ -1052,6 +1052,13 @@
           </div>
           <div class="kpi-icon-disc">⭐</div>
         </div>
+        <div class="kpi-card kpi-purple" id="kpiTelemetryCard" style="cursor: pointer;" title="Arize AI Observability & LLM Token Metrics">
+          <div class="kpi-info">
+            <h3>Arize Tokens Tracked</h3>
+            <div id="kpiTokensCount" class="kpi-value">0 ⚡</div>
+          </div>
+          <div class="kpi-icon-disc">🔭</div>
+        </div>
       </div>
 
       <!-- Table Filter Bar -->
@@ -1142,12 +1149,14 @@
               <th>University Email (student_name_four_digit_number@lpu.in)</th>
               <th>User Query</th>
               <th>Polite Comprehensive Response</th>
+              <th>Token Usage</th>
+              <th>Latency</th>
               <th>Timestamp</th>
             </tr>
           </thead>
           <tbody id="queriesTableBody">
             <tr>
-              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">
+              <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 40px;">
                 Loading chatbot query records from admin.db...
               </td>
             </tr>
@@ -1857,15 +1866,32 @@
           });
           const data = await res.json();
           if (res.ok && data.queries) {
+            if (data.stats) {
+              const kpiTok = document.getElementById('kpiTokensCount');
+              if (kpiTok) kpiTok.textContent = `${(data.stats.total_tokens || 0).toLocaleString()} ⚡`;
+            }
             queriesTableBody.innerHTML = data.queries.map(q => `
               <tr>
                 <td><strong style="color: #60a5fa;">${q.ticket_id || '—'}</strong></td>
                 <td><code>${q.query_id || '—'}</code></td>
                 <td><strong>${q.student_name}</strong><br><span style="font-size: 11px; color: var(--text-dim);">${q.university_id}</span></td>
                 <td><code style="color: #34d399; font-size: 11px;">${q.university_email}</code></td>
-                <td style="color: #fff; max-width: 220px; word-break: break-word;">${q.query_text}</td>
-                <td style="color: var(--text-muted); font-size: 12px; max-width: 280px; word-break: break-word;">
-                  ${(q.response_text || '').substring(0, 150)}...
+                <td style="color: #fff; max-width: 200px; word-break: break-word;">${escapeHtml(q.query_text)}</td>
+                <td style="color: var(--text-muted); font-size: 12px; max-width: 250px; word-break: break-word;">
+                  ${escapeHtml((q.response_text || '').substring(0, 140))}...
+                </td>
+                <td>
+                  <span class="stage-pill" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; display: inline-block;">
+                    ⚡ ${q.total_tokens || 0}
+                  </span>
+                  <div style="font-size: 10px; color: var(--text-dim); margin-top: 3px;">
+                    ${q.prompt_tokens || 0} in / ${q.completion_tokens || 0} out
+                  </div>
+                </td>
+                <td>
+                  <span class="stage-pill" style="background: rgba(96, 165, 250, 0.15); color: #60a5fa; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; display: inline-block;">
+                    ⏱️ ${q.latency_ms ? q.latency_ms + 'ms' : '—'}
+                  </span>
                 </td>
                 <td style="color: var(--text-dim); font-size: 11px; white-space: nowrap;">${q.timestamp}</td>
               </tr>

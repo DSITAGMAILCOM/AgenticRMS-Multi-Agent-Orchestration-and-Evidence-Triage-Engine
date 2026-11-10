@@ -5,6 +5,7 @@
 [![Database SQLite](https://img.shields.io/badge/Database-Dual%20SQLite%20(Isolated)-003B57.svg?logo=sqlite&logoColor=white)](#)
 [![LLM Groq](https://img.shields.io/badge/Inference-Groq%20Cloud%20(OpenAI%20API)-F55036.svg)](#)
 [![Security Hardened](https://img.shields.io/badge/Security-RLS%20%2B%20HMAC%20Tokens%20%2B%20Zero--Trust-green.svg)](#)
+[![Observability Arize](https://img.shields.io/badge/Observability-Arize%20AI%20%2B%20OpenInference-8A2BE2.svg)](#)
 [![Deployed on Render](https://img.shields.io/badge/Backend-Render-46E3B7.svg?logo=render&logoColor=white)](https://agenticrms-multi-agent-orchestration-and.onrender.com)
 [![Deployed on Netlify](https://img.shields.io/badge/Frontend-Netlify-00C7B7.svg?logo=netlify&logoColor=white)](https://agenticrms-multi-agent-orchestration.netlify.app/)
 
@@ -33,6 +34,7 @@ A high-performance, enterprise-grade **Multi-Agent University Support Portal & R
   - [Administrator Database (`admin.db`)](#2-administrator-database-admindb)
   - [Data Breach Prevention & Row-Level Security (RLS)](#3-data-breach-prevention--row-level-security-rls)
 - [Self-Healing Database & Memory Optimization](#-self-healing-database--memory-optimization)
+- [Arize AI Observability & Query Telemetry](#-arize-ai-observability--query-telemetry)
 - [Autonomous Domain Agents](#-autonomous-domain-agents)
 - [Frontend Responsiveness & Cross-Device Usability](#-frontend-responsiveness--cross-device-usability)
   - [1. Responsive Breakpoint Architecture](#1-responsive-breakpoint-architecture)
@@ -386,6 +388,51 @@ graph LR
   - **Validation by Row Count**: `is_university_db_seeded()` directly inspects the SQLite master schema and asserts `SELECT COUNT(*) FROM students > 0`.
   - **Self-Healing Fallback**: Both `StudentSession.authenticate_or_lookup()` (`core/session.py`) and `authenticate_admin()` (`core/admin_db.py`) detect missing or unseeded tables at runtime and automatically trigger `init_db()` and `init_admin_database()` on the fly.
   - **Build-Time Pre-Seeding**: The Render build pipeline executes `python database_setup.py` ahead of server launch, guaranteeing all operational and admin tables are seeded prior to accepting traffic.
+
+---
+
+## 🔭 Arize AI Observability & Query Telemetry
+
+The system integrates enterprise LLM observability powered by **Arize Phoenix**, **OpenInference**, and **OpenTelemetry** (`core/telemetry.py`):
+
+```mermaid
+graph LR
+    USER["👤 Student Query"] --> GATEWAY["🛡️ Server (server.py)"]
+    GATEWAY --> TEL_CTX["⏱️ Telemetry Context Tracker\n(track_query_telemetry)"]
+    TEL_CTX --> ORCH["🧭 Multi-Agent Orchestrator"]
+    ORCH --> GROQ["⚡ Groq LLM Inference\n(Instrumented Client)"]
+
+    GROQ -->|"1. Tracing Spans"| ARIZE["🔭 Arize Phoenix / Cloud\n(app.phoenix.arize.com)"]
+    GROQ -->|"2. Usage Metrics (Prompt, Comp, Total)"| TEL_CTX
+
+    TEL_CTX -->|"3. Log with Latency & Tokens"| DB1[("university.db\n(query_audit_logs)")]
+    TEL_CTX -->|"3. Mirror with Latency & Tokens"| DB2[("admin.db\n(admin_query_records)")]
+    TEL_CTX -->|"4. Telemetry Payload"| UI["🖥️ Client UI & Admin Dashboard"]
+```
+
+### 1. What is Monitored & Tracked
+- **Token Consumption**: Exact tracking of `prompt_tokens`, `completion_tokens`, and `total_tokens` consumed across all sub-agent and tool-calling LLM invocations.
+- **Wall-Clock Latency**: Millisecond-precision execution profiling for each domain agent hop and end-to-end user query synthesis.
+- **Agent Execution Trajectory**: Step-by-step audit spans capturing intent classification, multi-query decomposition, tool actions, and final resolution.
+- **Fail-Safe Non-Blocking Design**: Tracing runs asynchronously with zero performance degradation or downtime if external network collectors are unavailable.
+
+### 2. Dual Storage & Management Visibility
+- **Operational Database (`university.db`)**: `query_audit_logs` records token counts, latency, and full agent routing trajectories for auditing and compliance.
+- **Administrator Management (`admin.db`)**: `admin_query_records` stores per-query token and timing metrics, surfaced live in the Admin Management Portal (`/admin`).
+- **Administrative Portal Insights**:
+  - Live **Arize Tokens Tracked** KPI card.
+  - Granular token usage breakdown per student query (`X total (Y in / Z out)`).
+  - Exact query execution latency badges (`⏱️ ms`).
+
+### 3. Environment Configuration
+Configured seamlessly via `.env`:
+```env
+# Arize Observability Key (From app.phoenix.arize.com)
+Arize_Key="ak-your-arize-phoenix-key"
+# Optional Remote Collector Space (Defaults to Phoenix Cloud)
+# PHOENIX_COLLECTOR_ENDPOINT="https://app.phoenix.arize.com/s/your-space-name"
+# PHOENIX_PROJECT_NAME="AgenticRMS-University-Portal"
+```
 
 ---
 

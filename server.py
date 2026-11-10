@@ -24,6 +24,7 @@ from starlette.middleware.cors import CORSMiddleware
 from config import DB_PATH, console
 from core.session import StudentSession
 from core.tracker import QueryTracker
+from core.telemetry import track_query_telemetry, is_arize_configured
 from orchestrator.router import orchestrate_query, clean_query, active_gate_classify, detect_all_matching_domains
 from core.rms_handler import detect_rms_intent, handle_tracking_query, handle_history_query, create_automated_rms_ticket
 from core.stt import transcribe_audio_file
@@ -261,7 +262,8 @@ async def api_query(request):
             raw_query=cleaned_q
         )
 
-        raw_response = orchestrate_query(query, session=session, tracker=tracker)
+        with track_query_telemetry(tracker) as telemetry:
+            raw_response = orchestrate_query(query, session=session, tracker=tracker)
 
         # Determine domain from actual agent execution hops (multi-domain vs single)
         agent_hops = [h["to_agent"].replace("Agent", "").lower() for h in tracker.hops if "Agent" in h.get("to_agent", "")]
@@ -299,7 +301,7 @@ async def api_query(request):
             or any(h.get("to_agent") == "Default Human Gateway" or h.get("action_type") == "ESCALATION" for h in tracker.hops)
         )
 
-        # 3. Record query in all storage locations
+        # 3. Record query in all storage locations with token & latency telemetry
         log_res = log_query_across_all_locations(
             query_text=query,
             student_name=student_name,
@@ -310,7 +312,11 @@ async def api_query(request):
             four_digit_number=four_digit_no,
             ticket_id=target_tid,
             query_id=tracker.query_id,
-            routed_to_default_gateway=is_routed_to_gateway
+            routed_to_default_gateway=is_routed_to_gateway,
+            prompt_tokens=tracker.prompt_tokens,
+            completion_tokens=tracker.completion_tokens,
+            total_tokens=tracker.total_tokens,
+            latency_ms=tracker.latency_ms
         )
         target_tid = log_res["ticket_id"]
 
@@ -329,7 +335,15 @@ async def api_query(request):
             "total_hops": len(tracker.hops),
             "trajectory": [h["to_agent"] for h in tracker.hops],
             "logged_everywhere": True,
-            "storage_locations": ["RMS History", "Admin Portal", "Student Database"]
+            "storage_locations": ["RMS History", "Admin Portal", "Student Database"],
+            "telemetry": {
+                "prompt_tokens": tracker.prompt_tokens,
+                "completion_tokens": tracker.completion_tokens,
+                "total_tokens": tracker.total_tokens,
+                "latency_ms": tracker.latency_ms,
+                "total_hops": len(tracker.hops),
+                "arize_active": is_arize_configured()
+            }
         })
 
         # Ensure session token is attached
@@ -716,7 +730,7 @@ async def api_admin_audit_logs(request):
 
 
 async def api_admin_student_queries(request):
-    """Retrieves logged student queries across systems from admin.db."""
+    """Retrieves logged student queries across systems from admin.db with Arize telemetry."""
     admin = get_authenticated_admin(request)
     if not admin:
         return JSONResponse({"success": False, "queries": [], "error": "Unauthorized. Administrator session required."}, status_code=401)
@@ -729,7 +743,23 @@ async def api_admin_student_queries(request):
         cur.execute("SELECT * FROM admin_query_records ORDER BY timestamp DESC LIMIT 100")
         rows = [dict(r) for r in cur.fetchall()]
         conn.close()
-        return JSONResponse({"success": True, "queries": rows})
+
+        total_queries = len(rows)
+        total_tokens = sum(int(r.get("total_tokens") or 0) for r in rows)
+        avg_tokens = round(total_tokens / total_queries, 1) if total_queries > 0 else 0
+        avg_latency = round(sum(float(r.get("latency_ms") or 0.0) for r in rows) / total_queries, 1) if total_queries > 0 else 0.0
+
+        return JSONResponse({
+            "success": True,
+            "queries": rows,
+            "stats": {
+                "total_queries": total_queries,
+                "total_tokens": total_tokens,
+                "average_tokens": avg_tokens,
+                "average_latency_ms": avg_latency,
+                "arize_active": is_arize_configured()
+            }
+        })
     except Exception as e:
         return JSONResponse({"success": False, "queries": [], "error": str(e)}, status_code=500)
 
