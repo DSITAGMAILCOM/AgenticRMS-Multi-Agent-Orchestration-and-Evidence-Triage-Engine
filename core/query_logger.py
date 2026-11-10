@@ -66,6 +66,83 @@ def format_student_university_email(
 
 def ensure_multi_location_tables():
     """Ensures query logging tables exist across all storage locations."""
+    # Location 1: RMS History (helpdesk_tickets & query_audit_logs in university.db)
+    try:
+        conn_univ = sqlite3.connect(DB_PATH)
+        cursor_univ = conn_univ.cursor()
+        cursor_univ.execute("""
+            CREATE TABLE IF NOT EXISTS helpdesk_tickets (
+                ticket_id TEXT PRIMARY KEY,
+                university_id TEXT NOT NULL,
+                student_name TEXT NOT NULL,
+                university_email TEXT NOT NULL,
+                department_id TEXT NOT NULL,
+                query_text TEXT NOT NULL,
+                escalation_reason TEXT NOT NULL,
+                category TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'OPEN',
+                assigned_officer TEXT DEFAULT 'Unassigned',
+                human_resolution_notes TEXT DEFAULT '',
+                current_stage TEXT DEFAULT 'Hostel Office',
+                next_stage TEXT DEFAULT 'Dean (Hostel Affairs)',
+                estimated_resolution TEXT DEFAULT 'In 2-3 Working Days',
+                handler_email TEXT DEFAULT 'support@lpu.in',
+                stage_progress INTEGER DEFAULT 2,
+                last_inquiry_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                inquiry_count INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                resolved_at TIMESTAMP
+            )
+        """)
+        for col_def in [
+            ("current_stage", "TEXT DEFAULT 'Hostel Office'"),
+            ("next_stage", "TEXT DEFAULT 'Dean (Hostel Affairs)'"),
+            ("estimated_resolution", "TEXT DEFAULT 'In 2-3 Working Days'"),
+            ("handler_email", "TEXT DEFAULT 'support@lpu.in'"),
+            ("stage_progress", "INTEGER DEFAULT 2"),
+            ("last_inquiry_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+            ("inquiry_count", "INTEGER DEFAULT 1")
+        ]:
+            try:
+                cursor_univ.execute(f"ALTER TABLE helpdesk_tickets ADD COLUMN {col_def[0]} {col_def[1]}")
+            except Exception:
+                pass
+
+        cursor_univ.execute("""
+            CREATE TABLE IF NOT EXISTS query_audit_logs (
+                query_id TEXT PRIMARY KEY,
+                university_id TEXT NOT NULL,
+                student_name TEXT NOT NULL,
+                university_email TEXT NOT NULL,
+                raw_query TEXT NOT NULL,
+                final_resolution_type TEXT NOT NULL,
+                ticket_id TEXT,
+                total_hops INTEGER DEFAULT 0,
+                full_trajectory TEXT NOT NULL,
+                prompt_tokens INTEGER DEFAULT 0,
+                completion_tokens INTEGER DEFAULT 0,
+                total_tokens INTEGER DEFAULT 0,
+                latency_ms REAL DEFAULT 0.0,
+                arize_trace_id TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        for col_def in [
+            ("prompt_tokens", "INTEGER DEFAULT 0"),
+            ("completion_tokens", "INTEGER DEFAULT 0"),
+            ("total_tokens", "INTEGER DEFAULT 0"),
+            ("latency_ms", "REAL DEFAULT 0.0"),
+            ("arize_trace_id", "TEXT DEFAULT ''")
+        ]:
+            try:
+                cursor_univ.execute(f"ALTER TABLE query_audit_logs ADD COLUMN {col_def[0]} {col_def[1]}")
+            except Exception:
+                pass
+        conn_univ.commit()
+        conn_univ.close()
+    except Exception as e:
+        console.print(f"[dim red]Note helpdesk_tickets table creation: {e}[/dim red]")
+
     # Location 2: Admin Portal (admin.db)
     try:
         conn_admin = sqlite3.connect(ADMIN_DB_PATH)

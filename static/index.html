@@ -95,53 +95,26 @@
       </div>
 
       <!-- Conversation History Navigation -->
-      <nav class="history-scroll-container" aria-label="Conversation History">
+      <nav class="history-scroll-container" id="sidebarHistoryContainer" aria-label="Conversation History">
         
-        <div class="history-section">
+        <div class="history-section" id="historySectionToday">
           <div class="history-section-title">Today</div>
-          <div class="history-item" data-query="What is my University id and registration profile?">
-            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span class="history-label">What is my University id ?</span>
-          </div>
-          <div class="history-item" data-query="What are the university holiday dates and festival breaks?">
-            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span class="history-label">When I can plan my Holiday for Diwali ?</span>
+          <div class="history-items-group" id="historyGroupToday">
+            <!-- Dynamically populated from /api/history and live queries -->
           </div>
         </div>
 
-        <div class="history-section">
+        <div class="history-section" id="historySectionYesterday">
           <div class="history-section-title">Yesterday</div>
-          <div class="history-item" data-query="Show my exam datesheets and seating desk arrangement">
-            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span class="history-label">When is my Exam ?</span>
-          </div>
-          <div class="history-item" data-query="What is my current fee balance and hostel room?">
-            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span class="history-label">What is my current fee ?</span>
+          <div class="history-items-group" id="historyGroupYesterday">
+            <!-- Dynamically populated from /api/history -->
           </div>
         </div>
 
-        <div class="history-section">
+        <div class="history-section" id="historySectionPrevious">
           <div class="history-section-title">Previous 7 days</div>
-          <div class="history-item" data-query="What is the status of my internship file and NOC?">
-            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span class="history-label">Status of internship Benefits</span>
-          </div>
-          <div class="history-item" data-query="What is the minimum passing marks and grading scale if I got 85 marks?">
-            <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span class="history-label">Grade if got 85 Marks ?</span>
+          <div class="history-items-group" id="historyGroupPrevious">
+            <!-- Dynamically populated from /api/history -->
           </div>
         </div>
 

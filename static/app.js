@@ -37,8 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedTicketId: null,
     searchTerm: '',
     statusFilter: 'all',
-    historyPeriod: '6months',
-    ticketChats: {}
+    historyPeriod: 'all',
+    ticketChats: {},
+    queryHistory: []
   };
 
   // DOM Elements - Views & Navigation
@@ -117,6 +118,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const metricAvgTime = document.getElementById('metricAvgTime');
   const historyTableBody = document.getElementById('historyTableBody');
   const historyViewAllBtn = document.getElementById('historyViewAllBtn');
+
+  // DOM Elements - Sidebar Conversation History
+  const sidebarHistoryContainer = document.getElementById('sidebarHistoryContainer');
+  const historyGroupToday = document.getElementById('historyGroupToday');
+  const historyGroupYesterday = document.getElementById('historyGroupYesterday');
+  const historyGroupPrevious = document.getElementById('historyGroupPrevious');
+  const historySectionToday = document.getElementById('historySectionToday');
+  const historySectionYesterday = document.getElementById('historySectionYesterday');
+  const historySectionPrevious = document.getElementById('historySectionPrevious');
 
   // Category Icon Map
   const categoryIcons = {
@@ -232,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userAvatar.textContent = initials || 'AS';
 
         // Load Tickets and Data
-        await loadTickets();
+        await Promise.all([loadTickets(), loadQueryHistory()]);
         return true;
       } else {
         if (displayErrorInModal) {
@@ -258,6 +268,9 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       sessionStorage.removeItem('rms_authenticated_reg');
       state.isAuthenticated = false;
+      state.queryHistory = [];
+      state.tickets = [];
+      renderSidebarHistory();
       state.chatActive = false;
       messagesList.innerHTML = '';
       chatStream.classList.add('hidden');
@@ -298,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
       trackRmsView.classList.add('hidden');
       rmsHistoryView.classList.remove('hidden');
       bottomDockWrapper.style.display = 'none';
-      loadTickets().then(() => renderHistoryView());
+      Promise.all([loadTickets(), loadQueryHistory()]).then(() => renderHistoryView());
     }
 
     // Sync Top Nav Buttons (only buttons with data-view)
@@ -351,6 +364,107 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.warn('Tickets load error:', err);
     }
+  }
+
+  // =========================================================================
+  // Query History Loading & Dynamic Sidebar History
+  // =========================================================================
+  async function loadQueryHistory() {
+    if (!state.currentStudent.registration_no) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/history?reg_no=${encodeURIComponent(state.currentStudent.registration_no)}`);
+      if (res.ok) {
+        const data = await res.json();
+        state.queryHistory = data.history || [];
+        renderSidebarHistory();
+      }
+    } catch (err) {
+      console.warn('Query history load error:', err);
+    }
+  }
+
+  function renderSidebarHistory() {
+    if (!historyGroupToday) return;
+
+    const todayItems = [];
+    const yesterdayItems = [];
+    const olderItems = [];
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    const yDate = new Date();
+    yDate.setDate(yDate.getDate() - 1);
+    const yesterdayStr = yDate.toISOString().split('T')[0];
+
+    (state.queryHistory || []).forEach(item => {
+      const createdStr = item.created_at || '';
+      const datePart = createdStr.split(' ')[0] || createdStr.split('T')[0];
+
+      if (datePart === todayStr) {
+        todayItems.push(item);
+      } else if (datePart === yesterdayStr) {
+        yesterdayItems.push(item);
+      } else {
+        olderItems.push(item);
+      }
+    });
+
+    const createHistoryHtml = (item) => {
+      const q = item.raw_query || 'Inquiry';
+      const short = q.length > 34 ? q.substring(0, 32) + '...' : q;
+      return `
+        <div class="history-item" data-query="${escapeHtml(q)}" title="${escapeHtml(q)}">
+          <svg class="chat-bubble-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span class="history-label">${escapeHtml(short)}</span>
+        </div>
+      `;
+    };
+
+    // Render Today
+    if (todayItems.length > 0) {
+      historyGroupToday.innerHTML = todayItems.map(createHistoryHtml).join('');
+      if (historySectionToday) historySectionToday.style.display = 'block';
+    } else {
+      historyGroupToday.innerHTML = `
+        <div class="history-item empty-history" style="opacity: 0.6; font-size: 11px; padding: 6px 10px; cursor: default;">
+          <span>No queries logged today yet</span>
+        </div>
+      `;
+    }
+
+    // Render Yesterday
+    if (yesterdayItems.length > 0) {
+      historyGroupYesterday.innerHTML = yesterdayItems.map(createHistoryHtml).join('');
+      if (historySectionYesterday) historySectionYesterday.style.display = 'block';
+    } else {
+      if (historySectionYesterday) historySectionYesterday.style.display = 'none';
+    }
+
+    // Render Older
+    if (olderItems.length > 0) {
+      historyGroupPrevious.innerHTML = olderItems.map(createHistoryHtml).join('');
+      if (historySectionPrevious) historySectionPrevious.style.display = 'block';
+    } else {
+      if (historySectionPrevious) historySectionPrevious.style.display = 'none';
+    }
+
+    // Attach click listeners to all active dynamic history items
+    document.querySelectorAll('.history-items-group .history-item:not(.empty-history)').forEach(el => {
+      el.addEventListener('click', () => {
+        const query = el.getAttribute('data-query');
+        if (query) {
+          switchView('chat');
+          handleSendQuery(query);
+          if (window.innerWidth <= 900) {
+            sidebar.classList.remove('open');
+            if (sidebarBackdrop) sidebarBackdrop.classList.remove('active');
+          }
+        }
+      });
+    });
   }
 
   // =========================================================================
@@ -721,12 +835,37 @@ document.addEventListener('DOMContentLoaded', () => {
   // Render "RMS History" View
   // =========================================================================
   function renderHistoryView() {
+    let filteredTickets = [...(state.tickets || [])];
+    const now = new Date();
+
+    if (state.historyPeriod === 'today') {
+      const todayStr = now.toISOString().split('T')[0];
+      filteredTickets = filteredTickets.filter(t => (t.created_at || '').startsWith(todayStr));
+    } else if (state.historyPeriod === 'week') {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      filteredTickets = filteredTickets.filter(t => new Date(t.created_at || 0) >= weekAgo);
+    } else if (state.historyPeriod === 'month') {
+      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      filteredTickets = filteredTickets.filter(t => new Date(t.created_at || 0) >= monthAgo);
+    }
+
     metricTotal.textContent = state.stats.total_requests || state.tickets.length;
     metricResolved.textContent = state.stats.resolved || 0;
     metricInProgress.textContent = state.stats.in_progress || 0;
     metricAvgTime.textContent = `${state.stats.avg_resolution_days || 2.3} Days`;
 
-    historyTableBody.innerHTML = state.tickets.map(t => {
+    if (filteredTickets.length === 0) {
+      historyTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 36px 12px; color: rgba(255,255,255,0.5);">
+            No RMS requests found for this filter period. Ask a question to submit a new inquiry.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    historyTableBody.innerHTML = filteredTickets.map(t => {
       const isResolved = (t.status || '').toLowerCase() === 'resolved';
       const statusClass = isResolved ? 'status-resolved' : 'status-in-progress';
       const resolvedDate = t.resolved_at || '-';
@@ -734,7 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
         <tr data-id="${t.ticket_id}" title="Click to track RMS #${t.ticket_id}">
           <td class="history-row-id">${escapeHtml(t.ticket_id)}</td>
-          <td>${escapeHtml(t.category || 'General')}</td>
+          <td>${escapeHtml(t.category || 'General Issue')}</td>
           <td>${escapeHtml(t.created_at || 'Recent')}</td>
           <td><span class="rms-status-pill ${statusClass}">${escapeHtml(t.status || 'Active')}</span></td>
           <td>${escapeHtml(resolvedDate)}</td>
@@ -784,6 +923,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const typingRow = appendTypingIndicator();
     scrollChatToBottom();
 
+    // Optimistically add to Today's query history in sidebar
+    const optimisticItem = {
+      raw_query: query,
+      created_at: new Date().toISOString()
+    };
+    state.queryHistory = [optimisticItem, ...(state.queryHistory || [])];
+    renderSidebarHistory();
+
     try {
       const response = await fetch(`${API_BASE}/api/query`, {
         method: 'POST',
@@ -812,7 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
           latencyMs: data.telemetry?.latency_ms,
           arizeActive: data.telemetry?.arize_active
         });
-        await loadTickets();
+        await Promise.all([loadTickets(), loadQueryHistory()]);
         if (data.action === 'OPEN_TRACKER' && data.ticket_id) {
           state.selectedTicketId = data.ticket_id;
         }
@@ -1306,12 +1453,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (historyPeriodFilter) {
     historyPeriodFilter.addEventListener('change', (e) => {
       state.historyPeriod = e.target.value;
+      renderHistoryView();
       showToast(`Showing requests for: ${e.target.options[e.target.selectedIndex].text}`);
     });
   }
 
   if (historyViewAllBtn) {
     historyViewAllBtn.addEventListener('click', () => {
+      state.historyPeriod = 'all';
+      if (historyPeriodFilter) historyPeriodFilter.value = 'all';
+      renderHistoryView();
       showToast(`Displaying all ${state.tickets.length} historical requests.`);
     });
   }

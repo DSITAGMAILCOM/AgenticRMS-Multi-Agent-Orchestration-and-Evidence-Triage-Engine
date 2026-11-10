@@ -710,10 +710,10 @@ async def api_history(request):
         cursor.execute("""
             SELECT query_id, raw_query, final_resolution_type, ticket_id, total_hops, created_at
             FROM query_audit_logs
-            WHERE university_id = ?
+            WHERE university_id = ? OR LOWER(university_id) = LOWER(?)
             ORDER BY created_at DESC
-            LIMIT 15
-        """, (reg_no,))
+            LIMIT 30
+        """, (reg_no, reg_no))
         rows = cursor.fetchall()
         conn.close()
         return JSONResponse({"history": [dict(r) for r in rows]})
