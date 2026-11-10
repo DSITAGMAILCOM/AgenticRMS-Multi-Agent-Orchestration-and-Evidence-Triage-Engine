@@ -977,10 +977,24 @@ async def api_list_documents(request):
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
+async def api_health(request):
+    """Health check endpoint for deployment monitoring and uptime verification."""
+    return JSONResponse({
+        "status": "healthy",
+        "service": "university-rms-portal",
+        "version": "2.0.0",
+        "timestamp": datetime.datetime.now().isoformat()
+    })
+
+
 # =========================================================================
 # Application Routing Table
 # =========================================================================
 routes = [
+    # Health checks
+    Route("/health", api_health, methods=["GET", "HEAD"]),
+    Route("/api/health", api_health, methods=["GET", "HEAD"]),
+
     # Pages
     Route("/", serve_index, methods=["GET"]),
     Route("/admin", serve_admin, methods=["GET"]),
