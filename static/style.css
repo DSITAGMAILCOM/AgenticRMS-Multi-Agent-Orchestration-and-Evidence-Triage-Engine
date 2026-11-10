@@ -2456,17 +2456,24 @@ input.dock-input:focus-visible {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
-  transition: all var(--transition-fast);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 13px 18px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none !important;
+}
+
+.login-input-wrapper:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .login-input-wrapper:focus-within {
-  border-color: #df6d4d;
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 0 3px rgba(223, 109, 77, 0.25);
+  border-color: rgba(223, 109, 77, 0.85);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 3px rgba(223, 109, 77, 0.2), 0 8px 24px rgba(223, 109, 77, 0.12);
+  outline: none !important;
 }
 
 .login-field-icon {
@@ -2474,15 +2481,43 @@ input.dock-input:focus-visible {
   flex-shrink: 0;
 }
 
-.login-input {
-  background: transparent;
-  border: none;
-  outline: none;
+.login-input,
+#loginRegInput,
+input#loginRegInput {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
   color: #ffffff;
   font-family: var(--font-body);
   font-size: 0.98rem;
   font-weight: 500;
   width: 100%;
+}
+
+.login-input:focus,
+.login-input:focus-visible,
+.login-input:active,
+#loginRegInput:focus,
+#loginRegInput:focus-visible,
+#loginRegInput:active,
+input#loginRegInput:focus,
+input#loginRegInput:focus-visible,
+input#loginRegInput:active {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  outline-offset: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
 }
 
 .login-input::placeholder {
@@ -2605,6 +2640,22 @@ input.dock-input:focus-visible {
    CROSS-DEVICE RESPONSIVENESS & ACCESSIBILITY (WCAG 2.1 AA)
    ========================================================================== */
 
+/* Universal input reset: Prevent any browser-level square focus rings on input fields */
+input,
+textarea {
+  outline: none !important;
+}
+
+input:focus,
+input:focus-visible,
+input:active,
+textarea:focus,
+textarea:focus-visible {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+}
+
 /* Accessibility Focus States - strictly buttons and links, never input fields */
 button:focus-visible, 
 a:focus-visible, 
@@ -2628,11 +2679,21 @@ select:focus-visible,
 .input-dock-form,
 .input-dock-form input,
 .input-dock-form input:focus,
-.input-dock-form input:focus-visible {
+.input-dock-form input:focus-visible,
+#loginRegInput,
+#loginRegInput:focus,
+#loginRegInput:focus-visible,
+#loginRegInput:active,
+.login-input,
+.login-input:focus,
+.login-input:focus-visible,
+.login-input:active,
+.login-input-wrapper,
+.login-input-wrapper:focus,
+.login-input-wrapper:focus-within {
   outline: none !important;
   outline-width: 0 !important;
   outline-style: none !important;
-  border: none !important;
   box-shadow: none !important;
   -webkit-box-shadow: none !important;
   -webkit-appearance: none !important;
