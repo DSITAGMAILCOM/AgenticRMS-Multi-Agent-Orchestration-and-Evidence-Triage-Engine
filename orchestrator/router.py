@@ -33,7 +33,10 @@ ADMIN_PATTERNS = [
     r"\bfees?\b", r"\bdues?\b", r"\bpayments?\b", r"\bhostels?\b",
     r"\bresidential\b", r"\bscholarships?\b", r"\bchallans?\b",
     r"\bfines?\b", r"\badmissions?\b", r"\breceipts?\b", r"\btransport\b", r"\bbus\b",
-    r"\brms\b", r"\btrack(?:ing)?\b", r"\btickets?\b", r"\bhelpdesk\b", r"\bgrievances?\b", r"\bcomplaints?\b"
+    r"\brms\b", r"\btrack(?:ing)?\b", r"\btickets?\b", r"\bhelpdesk\b", r"\bgrievances?\b", r"\bcomplaints?\b",
+    r"\bprofiles?\b", r"\bregistrations?\b", r"\buniversity\s*ids?\b", r"\bstudent\s*ids?\b",
+    r"\broll\s*nos?\b", r"\bwho\s*am\s*i\b", r"\bmy\s*details\b", r"\bstudent\s*details\b",
+    r"\bmy\s*id\b", r"\bmy\s*info\b", r"\bacademic\s*profile\b"
 ]
 
 EXAM_PATTERNS = [

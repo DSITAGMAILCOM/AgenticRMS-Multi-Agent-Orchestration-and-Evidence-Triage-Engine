@@ -138,10 +138,11 @@ STUDENT PROFILE:
 {internship_data_snippet}
 Instructions:
 1. Provide the FULL, COMPLETE, and ACCURATE response containing ALL relevant information from the database (file ID, company name, role title, internship type, monthly stipend, file status, current desk, HOD approval, Dean approval, NOC issuance status, coordinator name and cabin location, and remarks). Never omit any field or give partial or half answers.
-2. Structure the information cleanly in concise, professional bullet points or a compact table.
-3. Keep the response direct, authoritative, and focused—do not write lengthy multi-page essays, and avoid unnecessary conversational padding.
+2. Structure the information cleanly in a compact Markdown table as much as possible.
+3. Keep the response strictly concise and between 3 to 9 lines—do not write lengthy multi-page essays, and avoid unnecessary conversational padding.
 4. If the student asks about their personal internship file, NOC status, or coordinator, synthesize directly from the LIVE RECORDS above.
 5. If asking about policies, NPTEL equivalence, or guidelines, use `search_internship_guidelines`.
+6. Never output raw JSON code blocks to the student. All central audit records are logged internally.
 """
         messages = [
             {"role": "system", "content": system_prompt},

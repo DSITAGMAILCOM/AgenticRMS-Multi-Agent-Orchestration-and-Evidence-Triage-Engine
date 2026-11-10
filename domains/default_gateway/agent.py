@@ -181,80 +181,26 @@ class DefaultGatewayAgent:
             bottleneck_analysis=bottleneck_analysis
         )
 
-        # Step 4: Assemble Structured Output with all Required Sections
-        clash_detail_text = ""
+        # Step 4: Assemble Concise Structured Table Output (3-9 lines)
         if clash_info:
             c1 = clash_info.get("course_1", "Course 1")
             c2 = clash_info.get("course_2", "Course 2")
             dt = clash_info.get("exam_date", "Scheduled Date")
             tm = clash_info.get("session_time", "Scheduled Time")
-            clash_detail_text = (
-                f"- **Conflicting Courses**: **{c1}** and **{c2}**\n"
-                f"- **Overlapping Slot**: {dt} at {tm}\n"
-                f"- **Clash Type**: Direct simultaneous session overlap (Double Booking)\n"
-            )
+            c_desc = f"{c1} & {c2} ({dt} at {tm})"
         else:
-            clash_detail_text = f"- **Escalation Case**: {reason}\n"
+            c_desc = reason
 
-        response_md = f"""### 🚀 Edu Revolution
-- **Curriculum & Credit Continuity**: Academic progression remains safeguarded while this scheduling discrepancy is resolved.
-- **Academic Impact Assessment**: Course coordinators for both subjects will be notified to prevent any attendance or internal continuous assessment (CA) penalty.
-- **Alternative Slot Pre-screening**: The department timetable committee has been alerted to review alternate examination slots in the supplementary/reserve window.
+        response_md = f"""### 🛡️ Examination Clash Escalation & Gateway Dispatch
 
----
-
-### 📝 Examination
-- **Timetable Audit Status**: Exam schedule conflict identified and flagged for urgent review.
-{clash_detail_text}- **Active Registered Courses**: {', '.join(session.enrolled_courses)}
-- **Action Taken**: Automated system has locked the conflicting slot to avoid duplicate admit card barcode generation and initiated immediate officer re-assignment.
-
----
-
-### 🛡️ Default Gateway (Escalation & Portal Dispatch)
-This query cannot be resolved autonomously by the self-service tier and has been escalated through the Default Gateway.
-
-| Parameter | Dispatch Detail |
+| Case Parameter | Record & Dispatch Detail |
 | :--- | :--- |
-| **Ticket Reference ID** | `{ticket_id}` |
-| **Audit Session Trace** | `{tracker.query_id}` |
-| **Target Portal** | **{target_portal_name}** (`{target_portal_url}`) |
-| **Escalated Query Type** | {portal_category.title()} Query |
-| **Escalation Reason** | {reason} |
-| **Ticket Status** | **ESCALATED – ACTION REQUIRED** |
-| **Designated Desk** | Timetable Coordination & Academic Grievance Cell |
-| **Provisioned Officer Role** | `{credentials['role']}` |
-| **Assigned Officer ID** | `{credentials['admin_id']}` (`{credentials['username']}`) |
-
-> **Routing Trajectory**:  
-> `{trajectory_str}`  
->  
-> **Resolution Protocol**:  
-> An academic officer has been provisioned access on the **{target_portal_name}** to adjust your datesheet slot. Official confirmation will be delivered to **`{session.university_email}`** within 24 hours.
-
----
-
-### 📊 Central Admin Portal Test Log
-```json
-{{
-  "query_id": "{tracker.query_id}",
-  "student_id": "{session.university_id}",
-  "student_query": "{query}",
-  "response_summary": "Escalated to {target_portal_name} under Ticket {ticket_id}",
-  "processing_time_seconds": {total_time},
-  "total_processing_time": "{total_time}s",
-  "routing_path": "{trajectory_str}",
-  "decision_rationale": "{decision_rationale}",
-  "escalation_status": "ESCALATED_{portal_category.upper()}",
-  "assigned_portal": "{target_portal_name}",
-  "provisioned_credentials": {{
-    "admin_id": "{credentials['admin_id']}",
-    "username": "{credentials['username']}",
-    "role": "{credentials['role']}",
-    "target_portal": "{credentials['target_portal']}"
-  }},
-  "bottleneck_analysis": "{bottleneck_analysis}"
-}}
-```
+| **Ticket Reference** | `{ticket_id}` (Status: **ACTION REQUIRED**) |
+| **Conflict Detail** | {c_desc} |
+| **Edu-Revolution Impact** | Continuous assessment & attendance preserved; coordinators notified |
+| **Target Routing** | **{target_portal_name}** ({portal_category.title()} Desk) |
+| **Assigned Officer** | {credentials['role']} (`{credentials['username']}`) |
+| **Resolution SLA** | Official revised slot dispatched to `{session.university_email}` within 24h |
 """
         return response_md
 

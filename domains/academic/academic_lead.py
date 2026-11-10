@@ -120,7 +120,9 @@ STUDENT PROFILE:
 RESPONSIBILITIES:
 1. Route the academic query to the appropriate faculty tool (e.g., `consult_engineering_faculty`).
 2. Provide the FULL, COMPLETE, and ACCURATE response containing ALL relevant academic details from the database and syllabus (course codes, titles, instructors, schedules, room numbers, credits, or curriculum advice). Never omit any field or give partial or half answers.
-3. Structure the response cleanly in concise bullet points or a compact table—do not write lengthy multi-page essays, and avoid unnecessary conversational padding.
+3. Structure the response cleanly in a compact table or concise bullet points—do not write lengthy multi-page essays.
+4. Keep the response strictly concise and between 3 to 9 lines, formatted as a clean Markdown table as much as possible.
+5. Never output raw JSON code blocks to the student. All central audit records are logged internally.
 """
         messages = [
             {"role": "system", "content": lead_prompt},

@@ -273,44 +273,15 @@ class ExaminationAgent:
                 bottleneck_analysis=bottleneck_analysis
             )
 
-            response_md = f"""### 🚀 Edu Revolution
-- **Curriculum & Credit Progression**: All registered credit modules ({', '.join(session.enrolled_courses)}) remain on track for successful semester completion.
-- **Academic Preparedness**: With zero timetable conflicts, your study plan and internal continuous assessment milestones proceed without interruption.
+            response_md = f"""### 📋 Verified Examination Timetable (No Clashes Detected)
 
----
+| Course Code | Exam Type | Date & Session | Venue & Room | Desk & Invigilator |
+| :--- | :--- | :--- | :--- | :--- |
+| **CSE423** | End‑Term Practical | 2026‑11‑20 (09:30 AM – 12:30 PM) | Central Computing Lab 3 (Room 34‑401) | Desk CS‑14 (Prof. R. Khanna) |
+| **CSE312** | End‑Term Theory | 2026‑11‑24 (01:30 PM – 04:30 PM) | Block 38 Hall B (Hall B‑2) | Desk CS‑88 (Dr. T. Chawla) |
+| **MATH204** | *Completed (Sem 4)* | — | Grade: A+ Recorded | No exam scheduled |
 
-### 📝 Examination
-A comprehensive audit of your official examination schedule against the University Examination Database confirms that **no examination clash exists** across your registered courses.
-
-| Course Code | Exam Type | Date | Session Time | Venue Center | Room No | Desk Allocation | Invigilator |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **CSE423** | End‑Term Practical | 2026‑11‑20 | 09:30 AM – 12:30 PM | Central Computing Complex Lab 3 | Room 34‑401 | Desk CS‑14 | Prof. R. Khanna |
-| **CSE312** | End‑Term Theory | 2026‑11‑24 | 01:30 PM – 04:30 PM | Block 38 Examination Hall B | Hall B‑2 | Desk CS‑88 | Dr. T. Chawla |
-| **MATH204** | *Completed (Sem 4)* | — | — | — | — | — | *(Grade: A+ Recorded)* |
-
-#### 💡 How This Information Protects & Helps You:
-1. **Dedicated Preparation Interval**: You have a 4‑day preparation window between your practical exam (Nov 20) and theory exam (Nov 24), allowing focused revision without fatigue.
-2. **Distinct Venues & Desks**: Both exams are pre-allocated in separate halls with confirmed invigilators, eliminating last-minute seating confusion.
-3. **Escalation Safeguard**: If you later enroll in a supplementary backlog or an additional open elective whose date conflicts with the above, you can immediately request an automated reschedule ticket.
-
----
-
-### 📊 Central Admin Portal Test Log
-```json
-{{
-  "query_id": "{tracker.query_id}",
-  "student_id": "{session.university_id}",
-  "student_query": "{query}",
-  "response_summary": "Respectful explanation of available timetable data with verified zero clashes",
-  "processing_time_seconds": {dt_end},
-  "total_processing_time": "{dt_end}s",
-  "routing_path": "{trajectory_str}",
-  "decision_rationale": "{decision_rationale}",
-  "escalation_status": "NO_CLASH_VERIFIED",
-  "assigned_portal": "Self-Service Examination Desk",
-  "bottleneck_analysis": "{bottleneck_analysis}"
-}}
-```
+*Audit Result: Verified 0 clashes across all registered courses. You have a dedicated 4-day study interval between practical and theory examinations.*
 """
             return response_md
 
@@ -340,10 +311,11 @@ STUDENT PROFILE:
 Instructions:
 1. Provide the FULL, COMPLETE, and ACCURATE response containing ALL relevant information from the database (all enrolled courses, exam types, dates, times, venues, room numbers, desk numbers, invigilators, past grades, credits, semesters). Never omit any field or course, and never provide partial or half answers.
 2. For exam schedules, account for every enrolled course: list details for courses with scheduled exams, and if an enrolled course has no exam scheduled in the database, explicitly note that.
-3. Structure the output cleanly in a compact Markdown table or organized bullet points.
-4. Keep the response concise, authoritative, and direct—do not make it a full one-page essay, and avoid conversational filler.
+3. Structure the output cleanly in a compact Markdown table as much as possible.
+4. Keep the response strictly concise and between 3 to 9 lines—do not make it a full one-page essay, and avoid conversational filler.
 5. If the student asks about their exam schedule, seating hall, or grades, synthesize directly from the LIVE RECORDS above.
 6. Cite the official university grading scale or database record where applicable.
+7. Never output raw JSON code blocks to the student. All central audit records are logged internally.
 """
         messages = [
             {"role": "system", "content": system_prompt},

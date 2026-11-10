@@ -1060,14 +1060,21 @@ body {
 .dock-input-field-wrap {
   flex: 1;
   display: flex;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-.dock-input {
+.dock-input,
+#queryInput {
   width: 100%;
   background: transparent;
   border: none !important;
   outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
   box-shadow: none !important;
+  -webkit-box-shadow: none !important;
   font-family: var(--font-body);
   font-size: 0.96rem;
   color: var(--dock-text);
@@ -1077,11 +1084,17 @@ body {
 .dock-input:focus,
 .dock-input:focus-visible,
 .dock-input:active,
+#queryInput:focus,
+#queryInput:focus-visible,
+#queryInput:active,
 input.dock-input:focus,
 input.dock-input:focus-visible {
   outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
   outline-offset: 0 !important;
   box-shadow: none !important;
+  -webkit-box-shadow: none !important;
   border: none !important;
 }
 
@@ -2592,10 +2605,38 @@ input.dock-input:focus-visible {
    CROSS-DEVICE RESPONSIVENESS & ACCESSIBILITY (WCAG 2.1 AA)
    ========================================================================== */
 
-/* Accessibility Focus States */
-:focus-visible:not(.dock-input):not(#queryInput):not(.input-dock-form input) {
+/* Accessibility Focus States - strictly buttons and links, never input fields */
+button:focus-visible, 
+a:focus-visible, 
+select:focus-visible, 
+[role="button"]:focus-visible {
   outline: 2px solid #df6d4d !important;
   outline-offset: 2px !important;
+}
+
+#queryInput,
+#queryInput:focus,
+#queryInput:focus-visible,
+#queryInput:active,
+.dock-input,
+.dock-input:focus,
+.dock-input:focus-visible,
+.dock-input:active,
+.dock-input-field-wrap,
+.dock-input-field-wrap:focus,
+.dock-input-field-wrap:focus-within,
+.input-dock-form,
+.input-dock-form input,
+.input-dock-form input:focus,
+.input-dock-form input:focus-visible {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
 
 /* Touch Targets: minimum 44px on touch devices */

@@ -978,19 +978,38 @@
         </div>
       </form>
 
+      <!-- Pre-Seeded Department Administrator Accounts -->
       <div class="demo-accounts">
-        <div class="demo-accounts-title">Pre-Seeded Administrator Accounts</div>
+        <button type="button" id="quickTestOrchBtn" style="width: 100%; margin-bottom: 14px; padding: 12px 16px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3)); border: 1.5px solid rgba(139, 92, 246, 0.7); border-radius: 12px; color: #f1f5f9; font-weight: 600; font-size: 13.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s ease;">
+          <span style="font-size: 16px;">🌐</span>
+          <span>1-Click Test Login as Central Orchestration Master</span>
+          <span style="font-size: 11px; background: rgba(139, 92, 246, 0.5); padding: 2px 8px; border-radius: 6px;">Live Trace</span>
+        </button>
+
+        <div class="demo-accounts-title">Pre-Seeded Department Credentials (admin.db)</div>
         <div class="demo-chips-grid">
-          <button type="button" class="demo-chip-btn" data-user="admin" data-pass="Admin@RMS2026!">
-            <span><strong>admin</strong> (SuperAdmin — Dean of Student Affairs)</span>
+          <button type="button" class="demo-chip-btn" data-user="central_orchestrator" data-pass="Orchestrator@RMS2026!">
+            <span><strong>central_orchestrator</strong> (Central Orchestration System Master)</span>
             <span>➔</span>
           </button>
-          <button type="button" class="demo-chip-btn" data-user="officer_sharma" data-pass="Officer@RMS2026!">
-            <span><strong>officer_sharma</strong> (Support Officer — Hostel & Grievance)</span>
+          <button type="button" class="demo-chip-btn" data-user="academic_officer" data-pass="Academic@RMS2026!">
+            <span><strong>academic_officer</strong> (Academic Affairs & Curriculum)</span>
+            <span>➔</span>
+          </button>
+          <button type="button" class="demo-chip-btn" data-user="admin_officer" data-pass="Admin@RMS2026!">
+            <span><strong>admin_officer</strong> (Administration & Residential Welfare)</span>
+            <span>➔</span>
+          </button>
+          <button type="button" class="demo-chip-btn" data-user="edurev_officer" data-pass="EduRev@RMS2026!">
+            <span><strong>edurev_officer</strong> (Arize Edu-Revolution & Career Services)</span>
             <span>➔</span>
           </button>
           <button type="button" class="demo-chip-btn" data-user="exam_controller" data-pass="Exam@RMS2026!">
-            <span><strong>exam_controller</strong> (Examination Officer)</span>
+            <span><strong>exam_controller</strong> (Controller of Examinations — COE)</span>
+            <span>➔</span>
+          </button>
+          <button type="button" class="demo-chip-btn" data-user="admin" data-pass="Admin@RMS2026!">
+            <span><strong>admin</strong> (SuperAdmin — Dean of Student Affairs)</span>
             <span>➔</span>
           </button>
         </div>
@@ -1067,6 +1086,7 @@
           <button class="filter-btn active" data-filter="all">All Requests</button>
           <button class="filter-btn" data-filter="in progress">Active Queue</button>
           <button class="filter-btn" data-filter="resolved">Resolved</button>
+          <button class="filter-btn" data-filter="orchestration" id="filterOrchestrationBtn" style="background: rgba(99, 102, 241, 0.25); border-color: rgba(129, 140, 248, 0.5); color: #e0e7ff; font-weight: 600;">🌐 Central Orchestration & Live Query Trace</button>
           <button class="filter-btn" data-filter="audit">Audit Trail (admin.db)</button>
           <button class="filter-btn" data-filter="queries">Chatbot Queries (admin.db)</button>
           <button class="filter-btn" data-filter="feedback" id="filterFeedbackBtn">⭐ Student Feedback</button>
@@ -1204,6 +1224,54 @@
         </table>
       </div>
 
+      <!-- Central Orchestration Live Text Log Container -->
+      <div id="orchestrationTableContainer" class="table-container hidden">
+        <div class="orchestration-header-bar" style="padding: 16px 20px; background: rgba(30, 41, 59, 0.7); border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700; color: #f8fafc; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span>🌐 Central Department Live Text Log & Query Trace</span>
+              <span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: rgba(99, 102, 241, 0.3); color: #c7d2fe; border: 1px solid rgba(99, 102, 241, 0.4);">admin.db::central_test_logs</span>
+            </h3>
+            <p style="font-size: 12px; color: #94a3b8; margin: 4px 0 0 0;">
+              Real-time multi-agent routing trace: which query goes to which department, how much time each query is taking, and at what stage it is taking how much time.
+            </p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <select id="orchDeptFilter" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.18); color: #e2e8f0; font-size: 12px; padding: 6px 12px; border-radius: 8px; outline: none; cursor: pointer;">
+              <option value="ALL">All Departments</option>
+              <option value="Examination">Examination (COE)</option>
+              <option value="Administration">Administration & Fees</option>
+              <option value="Academic">Academic Affairs</option>
+              <option value="Edu-Revolution">Edu-Revolution</option>
+              <option value="Gateway">Default Gateway Escalations</option>
+            </select>
+            <span class="live-status-pill" style="font-size: 11px;">
+              <span class="live-pulse"></span> Auto-Sync (3s)
+            </span>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="min-width: 140px;">Timestamp & Query ID</th>
+              <th style="min-width: 120px;">Student ID</th>
+              <th style="min-width: 220px;">Incoming Student Query</th>
+              <th style="min-width: 170px;">Target Department</th>
+              <th style="min-width: 320px;">Stage-by-Stage Latency Breakdown</th>
+              <th style="min-width: 110px;">Total Time</th>
+              <th style="min-width: 110px;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="orchestrationTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                Loading live query trace and departmental routing logs from admin.db...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
     </section>
 
   </main>
@@ -1301,9 +1369,11 @@
         admin: null,
         tickets: [],
         feedback: [],
+        orchestrationLogs: [],
         currentFilter: 'all',
         searchTerm: '',
-        activeTicket: null
+        activeTicket: null,
+        pendingOrch: false
       };
 
       // Elements
@@ -1320,6 +1390,7 @@
       const adminRole = document.getElementById('adminRole');
       const adminLogoutBtn = document.getElementById('adminLogoutBtn');
       const demoChips = document.querySelectorAll('.demo-chip-btn');
+      const quickTestOrchBtn = document.getElementById('quickTestOrchBtn');
 
       const kpiTotal = document.getElementById('kpiTotal');
       const kpiInProgress = document.getElementById('kpiInProgress');
@@ -1329,6 +1400,7 @@
       const kpiFeedbackCard = document.getElementById('kpiFeedbackCard');
 
       const filterBtns = document.querySelectorAll('.filter-btn');
+      const filterOrchestrationBtn = document.getElementById('filterOrchestrationBtn');
       const adminSearchInput = document.getElementById('adminSearchInput');
       const refreshBtn = document.getElementById('refreshBtn');
       const ticketsTableContainer = document.getElementById('ticketsTableContainer');
@@ -1339,6 +1411,9 @@
       const queriesTableBody = document.getElementById('queriesTableBody');
       const feedbackTableContainer = document.getElementById('feedbackTableContainer');
       const feedbackTableBody = document.getElementById('feedbackTableBody');
+      const orchestrationTableContainer = document.getElementById('orchestrationTableContainer');
+      const orchestrationTableBody = document.getElementById('orchestrationTableBody');
+      const orchDeptFilter = document.getElementById('orchDeptFilter');
       const fbAvgRating = document.getElementById('fbAvgRating');
       const fbTotalSubmissions = document.getElementById('fbTotalSubmissions');
       const fbNetPromoter = document.getElementById('fbNetPromoter');
@@ -1411,6 +1486,14 @@
           adminRole.textContent = `${state.admin.role || 'Admin'} • ${state.admin.department || 'Operations'}`;
           const initials = (state.admin.full_name || 'AD').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
           adminAvatar.textContent = initials || 'AD';
+
+          // If central orchestrator, automatically focus on the live orchestration trace
+          if (state.admin.username === 'central_orchestrator' || state.admin.role === 'CentralOrchestrator' || state.pendingOrch) {
+            state.pendingOrch = false;
+            setTimeout(() => {
+              if (filterOrchestrationBtn) filterOrchestrationBtn.click();
+            }, 100);
+          }
         } else {
           adminName.textContent = 'Admin Workspace';
           adminRole.textContent = 'Active Session';
@@ -1418,11 +1501,24 @@
         }
       }
 
+      // 1-Click Quick Test Login as Central Orchestration Master
+      if (quickTestOrchBtn) {
+        quickTestOrchBtn.addEventListener('click', () => {
+          adminUsername.value = 'central_orchestrator';
+          adminPassword.value = 'Orchestrator@RMS2026!';
+          state.pendingOrch = true;
+          adminLoginForm.dispatchEvent(new Event('submit'));
+        });
+      }
+
       // Demo Chip Handlers
       demoChips.forEach(chip => {
         chip.addEventListener('click', () => {
           adminUsername.value = chip.getAttribute('data-user');
           adminPassword.value = chip.getAttribute('data-pass');
+          if (adminUsername.value === 'central_orchestrator') {
+            state.pendingOrch = true;
+          }
           adminLoginForm.dispatchEvent(new Event('submit'));
         });
       });
@@ -1675,22 +1771,32 @@
           const filter = btn.getAttribute('data-filter');
           state.currentFilter = filter;
 
-          if (filter === 'audit') {
+          if (filter === 'orchestration') {
             ticketsTableContainer.classList.add('hidden');
             queriesTableContainer.classList.add('hidden');
             feedbackTableContainer.classList.add('hidden');
+            auditTableContainer.classList.add('hidden');
+            orchestrationTableContainer.classList.remove('hidden');
+            await loadOrchestrationLogs();
+          } else if (filter === 'audit') {
+            ticketsTableContainer.classList.add('hidden');
+            queriesTableContainer.classList.add('hidden');
+            feedbackTableContainer.classList.add('hidden');
+            orchestrationTableContainer.classList.add('hidden');
             auditTableContainer.classList.remove('hidden');
             await loadAuditLogs();
           } else if (filter === 'queries') {
             ticketsTableContainer.classList.add('hidden');
             auditTableContainer.classList.add('hidden');
             feedbackTableContainer.classList.add('hidden');
+            orchestrationTableContainer.classList.add('hidden');
             queriesTableContainer.classList.remove('hidden');
             await loadQueriesLogs();
           } else if (filter === 'feedback') {
             ticketsTableContainer.classList.add('hidden');
             auditTableContainer.classList.add('hidden');
             queriesTableContainer.classList.add('hidden');
+            orchestrationTableContainer.classList.add('hidden');
             feedbackTableContainer.classList.remove('hidden');
             await loadFeedback();
           } else {
@@ -1698,6 +1804,7 @@
             auditTableContainer.classList.add('hidden');
             queriesTableContainer.classList.add('hidden');
             feedbackTableContainer.classList.add('hidden');
+            orchestrationTableContainer.classList.add('hidden');
             renderTable();
           }
         });
@@ -1926,10 +2033,126 @@
         }
       }
 
+      async function loadOrchestrationLogs(silent = false) {
+        try {
+          const headers = state.adminToken ? { 'Authorization': `Bearer ${state.adminToken}` } : {};
+          const res = await fetch(`${API_BASE}/api/admin/central-orchestration-logs`, { headers });
+          const data = await res.json();
+          if (res.ok && data.success && Array.isArray(data.logs)) {
+            state.orchestrationLogs = data.logs;
+            renderOrchestrationTable();
+            if (!silent) {
+              showToast(`Loaded ${data.logs.length} central orchestration live traces.`);
+            }
+          } else {
+            orchestrationTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">No central query traces recorded yet.</td></tr>`;
+          }
+        } catch (e) {
+          if (!silent) showToast('Failed to load orchestration logs.');
+        }
+      }
+
+      function renderOrchestrationTable() {
+        const logs = state.orchestrationLogs || [];
+        const selectedDept = (orchDeptFilter ? orchDeptFilter.value : 'ALL').toLowerCase();
+        const term = (state.searchTerm || '').toLowerCase();
+
+        const filtered = logs.filter(l => {
+          const matchesDept = selectedDept === 'all' || (l.department || '').toLowerCase().includes(selectedDept);
+          const matchesSearch = !term ||
+            (l.query_id || '').toLowerCase().includes(term) ||
+            (l.student_id || '').toLowerCase().includes(term) ||
+            (l.student_query || '').toLowerCase().includes(term) ||
+            (l.department || '').toLowerCase().includes(term);
+          return matchesDept && matchesSearch;
+        });
+
+        if (filtered.length === 0) {
+          orchestrationTableBody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                No query routing traces match the selected filters.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        orchestrationTableBody.innerHTML = filtered.map(l => {
+          let deptColor = '#60a5fa';
+          const dLower = (l.department || '').toLowerCase();
+          if (dLower.includes('exam')) deptColor = '#f59e0b';
+          else if (dLower.includes('admin')) deptColor = '#3b82f6';
+          else if (dLower.includes('acad')) deptColor = '#10b981';
+          else if (dLower.includes('edurev') || dLower.includes('revolution')) deptColor = '#a855f7';
+          else if (dLower.includes('gateway') || dLower.includes('escalat')) deptColor = '#ef4444';
+
+          let statusClass = 'status-resolved';
+          let statusText = l.escalation_status || 'RESOLVED';
+          if (statusText === 'ESCALATED') {
+            statusClass = 'status-in-progress';
+          }
+
+          const rawTiming = l.stage_timings || '';
+          const parts = rawTiming.includes('➔') ? rawTiming.split('➔') : [rawTiming];
+          const formattedTiming = parts.map(part => {
+            return `<span style="display: inline-block; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 5px; margin: 2px 2px; font-size: 11px; border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1;">${escapeHtml(part.trim())}</span>`;
+          }).join('<span style="color: #818cf8; font-weight: bold; margin: 0 3px;">➔</span>');
+
+          return `
+            <tr>
+              <td>
+                <div style="font-weight: 700; color: #818cf8; font-family: monospace;">${escapeHtml(l.query_id || 'QRY')}</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(l.timestamp || '')}</div>
+              </td>
+              <td>
+                <span class="user-pill">🎓 ${escapeHtml(l.student_id || '12201948')}</span>
+              </td>
+              <td>
+                <div style="font-weight: 600; color: #f8fafc; font-size: 12.5px; max-width: 250px; word-break: break-word;">
+                  "${escapeHtml(l.student_query || '')}"
+                </div>
+                <div style="font-size: 11px; color: var(--text-dim); margin-top: 3px;">
+                  Rationale: ${escapeHtml(l.decision_rationale || '')}
+                </div>
+              </td>
+              <td>
+                <span class="category-pill" style="border-color: ${deptColor}; color: ${deptColor}; font-weight: 600;">
+                  ${escapeHtml(l.department || 'Central')}
+                </span>
+              </td>
+              <td>
+                <div style="font-size: 11px; line-height: 1.6;">
+                  ${formattedTiming}
+                </div>
+              </td>
+              <td>
+                <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-family: monospace; font-size: 11.5px; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                  ⏱️ ${escapeHtml(l.total_time_str || '')}
+                </span>
+              </td>
+              <td>
+                <span class="status-pill ${statusClass}">
+                  ${statusText}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      if (orchDeptFilter) {
+        orchDeptFilter.addEventListener('change', () => {
+          renderOrchestrationTable();
+        });
+      }
+
       adminSearchInput.addEventListener('input', (e) => {
         state.searchTerm = e.target.value.trim();
         if (state.currentFilter === 'feedback') {
           renderFeedbackTable();
+        } else if (state.currentFilter === 'orchestration') {
+          renderOrchestrationTable();
         } else {
           renderTable();
         }
@@ -1942,22 +2165,26 @@
           loadAuditLogs();
         } else if (state.currentFilter === 'queries') {
           loadQueriesLogs();
+        } else if (state.currentFilter === 'orchestration') {
+          loadOrchestrationLogs();
         } else {
           loadTickets();
         }
         showToast('Refreshing live data from university.db and admin.db...');
       });
 
-      // Auto-refresh RMS data every 5 seconds so future student queries update automatically
+      // Auto-refresh RMS data every 4 seconds so future student queries update automatically
       setInterval(() => {
         if (!dashboardView.classList.contains('hidden')) {
           if (state.currentFilter === 'feedback') {
             loadFeedback(true);
+          } else if (state.currentFilter === 'orchestration') {
+            loadOrchestrationLogs(true);
           } else {
             loadTickets(true);
           }
         }
-      }, 5000);
+      }, 4000);
 
       // Speech-to-Text "Mike" integration with Faster-Whisper CPU
       function setupMikeSTT(btnElement, targetInputElement) {

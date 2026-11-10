@@ -111,40 +111,67 @@ def init_admin_database():
 
     conn.commit()
 
-    # Seed Default Administrators if table is empty
-    cursor.execute("SELECT COUNT(*) FROM admin_users")
-    if cursor.fetchone()[0] == 0:
-        seed_admins = [
-            {
-                "admin_id": "ADM-001",
-                "username": "admin",
-                "email": "admin@lpu.in",
-                "password": "Admin@RMS2026!",
-                "role": "SuperAdmin",
-                "full_name": "Dr. Vikram Malhotra",
-                "department": "Dean of Student Affairs"
-            },
-            {
-                "admin_id": "ADM-002",
-                "username": "officer_sharma",
-                "email": "r.sharma@lpu.in",
-                "password": "Officer@RMS2026!",
-                "role": "SupportOfficer",
-                "full_name": "Rajesh Sharma",
-                "department": "Hostel & Central Grievance Desk"
-            },
-            {
-                "admin_id": "ADM-003",
-                "username": "exam_controller",
-                "email": "coe@lpu.in",
-                "password": "Exam@RMS2026!",
-                "role": "ExaminationOfficer",
-                "full_name": "Prof. S. K. Gupta",
-                "department": "Controller of Examinations"
-            }
-        ]
+    # Seed Default Departmental Administrators
+    seed_admins = [
+        {
+            "admin_id": "ADM-ORCH-01",
+            "username": "central_orchestrator",
+            "email": "orchestrator@lpu.in",
+            "password": "Orchestrator@RMS2026!",
+            "role": "CentralOrchestrator",
+            "full_name": "Central Orchestration System Master",
+            "department": "Central Department & System Telemetry"
+        },
+        {
+            "admin_id": "ADM-ACAD-01",
+            "username": "academic_officer",
+            "email": "academic@lpu.in",
+            "password": "Academic@RMS2026!",
+            "role": "AcademicOfficer",
+            "full_name": "Dr. Anita Desai",
+            "department": "Academic Affairs & Course Coordination"
+        },
+        {
+            "admin_id": "ADM-ADMIN-01",
+            "username": "admin_officer",
+            "email": "admin_officer@lpu.in",
+            "password": "Admin@RMS2026!",
+            "role": "AdministrativeOfficer",
+            "full_name": "Rajesh Sharma",
+            "department": "Administration, Fees & Residential Welfare"
+        },
+        {
+            "admin_id": "ADM-EDUREV-01",
+            "username": "edurev_officer",
+            "email": "edurev@lpu.in",
+            "password": "EduRev@RMS2026!",
+            "role": "EduRevOfficer",
+            "full_name": "Dr. Gagandeep Sethi",
+            "department": "Edu-Revolution, Career Services & NPTEL"
+        },
+        {
+            "admin_id": "ADM-EXAM-01",
+            "username": "exam_controller",
+            "email": "coe@lpu.in",
+            "password": "Exam@RMS2026!",
+            "role": "ExaminationOfficer",
+            "full_name": "Prof. S. K. Gupta",
+            "department": "Controller of Examinations (COE)"
+        },
+        {
+            "admin_id": "ADM-001",
+            "username": "admin",
+            "email": "admin@lpu.in",
+            "password": "Admin@RMS2026!",
+            "role": "SuperAdmin",
+            "full_name": "Dr. Vikram Malhotra",
+            "department": "Dean of Student Affairs"
+        }
+    ]
 
-        for adm in seed_admins:
+    for adm in seed_admins:
+        cursor.execute("SELECT admin_id FROM admin_users WHERE username = ?", (adm["username"],))
+        if not cursor.fetchone():
             p_hash, salt = hash_password(adm["password"])
             cursor.execute("""
                 INSERT INTO admin_users (admin_id, username, email, password_hash, salt, role, full_name, department)
@@ -160,8 +187,7 @@ def init_admin_database():
                 adm["department"]
             ))
 
-        conn.commit()
-
+    conn.commit()
     conn.close()
 
 
