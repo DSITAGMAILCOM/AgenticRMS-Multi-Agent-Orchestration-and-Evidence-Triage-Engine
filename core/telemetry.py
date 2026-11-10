@@ -61,6 +61,7 @@ def init_arize_telemetry() -> bool:
         return False
 
     project_name = os.getenv("PHOENIX_PROJECT_NAME", "AgenticRMS-University-Portal")
+    space_id = (os.getenv("SPACE_ID") or os.getenv("ARIZE_SPACE_ID") or "").strip().strip("'\"")
     endpoint = os.getenv("PHOENIX_COLLECTOR_ENDPOINT", "").strip()
 
     try:
@@ -69,8 +70,26 @@ def init_arize_telemetry() -> bool:
         # Configure environment for Phoenix / OpenInference
         os.environ["PHOENIX_API_KEY"] = key
         os.environ["ARIZE_API_KEY"] = key
+        if space_id:
+            os.environ["ARIZE_SPACE_ID"] = space_id
+            os.environ["SPACE_ID"] = space_id
 
-        if endpoint:
+        if space_id:
+            from phoenix.otel import register
+            target_endpoint = endpoint or "https://otlp.arize.com/v1"
+            headers = {"space_id": space_id, "api_key": key}
+            _arize_tracer_provider = register(
+                project_name=project_name,
+                api_key=key,
+                endpoint=target_endpoint,
+                headers=headers,
+                auto_instrument=True,
+                batch=True,
+                set_global_tracer_provider=True,
+                verbose=False
+            )
+            GroqInstrumentor().instrument(tracer_provider=_arize_tracer_provider)
+        elif endpoint:
             from phoenix.otel import register
             _arize_tracer_provider = register(
                 project_name=project_name,

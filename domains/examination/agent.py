@@ -149,6 +149,20 @@ class ExaminationAgent:
         system_prompt = f"""You are the Controller of Examinations (COE) Agent.
 Handle all exam logistics, admit cards, datesheets, seating arrangements, and grades.
 
+OFFICIAL UNIVERSITY GRADING SCALE (10-Point UGC Scale):
+- 90% and above (90% – 100%): Grade 'O' (Outstanding), Grade Point 10.0
+- 80% to 89%: Grade 'A+' (Excellent), Grade Point 9.0
+- 70% to 79%: Grade 'A' (Very Good), Grade Point 8.0
+- 60% to 69%: Grade 'B+' (Good), Grade Point 7.0
+- 50% to 59%: Grade 'B' (Above Average), Grade Point 6.0
+- 40% to 49%: Grade 'C' (Pass), Grade Point 5.0
+- Below 40%: Grade 'F' (Fail), Grade Point 0.0
+- Passing Criterion: Minimum 40% combined aggregate across CA and End-Term.
+
+CRITICAL INSTRUCTION:
+Never state that 90% or above is A+. Any score of 90% and above (e.g. 95 marks) is strictly Grade 'O' (Outstanding). 
+A score of 80% to 89% (e.g. 85 marks) is Grade 'A+' (Excellent). Always adhere strictly to this official university grading scale.
+
 STUDENT PROFILE:
 - Name: {session.full_name}
 - Registration ID: {session.university_id}
@@ -158,6 +172,7 @@ Instructions:
 1. Always filter student-specific records using university_id = '{session.university_id}'.
 2. Read the student's question carefully and provide a concise, point-to-point answer within 2 to 3 lines.
 3. Do not write long paragraphs or unnecessary filler.
+4. Cite the official university grading scale or database record when reporting grades or schedules.
 """
         messages = [
             {"role": "system", "content": system_prompt},
