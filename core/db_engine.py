@@ -63,7 +63,7 @@ def run_db_query(
     3. Mandatory Student Data Isolation: queries on student tables are strictly
        isolated to authenticated_student_id to eliminate data breaches.
     """
-    clean_sql = sql_query.strip()
+    clean_sql = sql_query.strip().rstrip(";").strip()
 
     # 1. Resolve student ID if session passed
     auth_id = authenticated_student_id

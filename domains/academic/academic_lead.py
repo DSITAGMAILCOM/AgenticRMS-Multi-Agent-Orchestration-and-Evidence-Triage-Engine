@@ -127,7 +127,7 @@ RESPONSIBILITIES:
             {"role": "user", "content": query}
         ]
 
-        for _ in range(3):
+        for _ in range(5):
             res = client.chat.completions.create(
                 model=self.model,
                 messages=messages,
@@ -150,10 +150,20 @@ RESPONSIBILITIES:
                 sub_agent = FACULTY_AGENTS.get(fac_id)
                 output = sub_agent.run(sub_q, session=session) if sub_agent else f"Faculty {fac_id} not available."
 
-                messages.append({"role": "tool", "tool_call_id": call.id, "content": str(output)})
+                messages.append({"role": "tool", "tool_call_id": call.id, "name": call.function.name, "content": str(output)})
 
-        final = client.chat.completions.create(model=self.model, messages=messages, tools=ACADEMIC_LEAD_TOOLS, tool_choice="none")
-        return final.choices[0].message.content or ""
+        messages.append({
+            "role": "user",
+            "content": "Synthesize and provide the final concise answer to the student right now based on the information retrieved above. Do not call any tools."
+        })
+        try:
+            final = client.chat.completions.create(model=self.model, messages=messages, temperature=0.0)
+            return final.choices[0].message.content or ""
+        except Exception:
+            for m in reversed(messages):
+                if m.get("role") == "tool" and m.get("content"):
+                    return f"Here is the retrieved academic information:\n{m.get('content')}"
+            return "Unable to retrieve academic information at this time."
 
 
 academic_lead = AcademicLeadAgent()

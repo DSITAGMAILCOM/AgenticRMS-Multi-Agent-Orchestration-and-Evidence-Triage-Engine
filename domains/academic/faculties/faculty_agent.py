@@ -57,7 +57,7 @@ class FacultyAgent:
             {"role": "user", "content": query}
         ]
 
-        for _ in range(3):
+        for _ in range(5):
             res = client.chat.completions.create(model=AGENT_MODEL, messages=messages, tools=tools, temperature=0.0)
             msg = res.choices[0].message
             messages.append(msg)
@@ -78,7 +78,17 @@ class FacultyAgent:
                 else:
                     output = "Tool not found."
 
-                messages.append({"role": "tool", "tool_call_id": call.id, "content": str(output)})
+                messages.append({"role": "tool", "tool_call_id": call.id, "name": fn_name, "content": str(output)})
 
-        final = client.chat.completions.create(model=AGENT_MODEL, messages=messages, tools=tools, tool_choice="none")
-        return final.choices[0].message.content or ""
+        messages.append({
+            "role": "user",
+            "content": "Synthesize and provide the final concise answer to the student right now based on the information retrieved above. Do not call any tools."
+        })
+        try:
+            final = client.chat.completions.create(model=AGENT_MODEL, messages=messages, temperature=0.0)
+            return final.choices[0].message.content or ""
+        except Exception:
+            for m in reversed(messages):
+                if m.get("role") == "tool" and m.get("content"):
+                    return f"Here is the retrieved course information:\n{m.get('content')}"
+            return "Unable to retrieve course details at this time."
