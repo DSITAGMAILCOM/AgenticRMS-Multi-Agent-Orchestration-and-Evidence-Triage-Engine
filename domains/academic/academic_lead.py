@@ -119,8 +119,8 @@ STUDENT PROFILE:
 
 RESPONSIBILITIES:
 1. Route the academic query to the appropriate faculty tool (e.g., `consult_engineering_faculty`).
-2. Read the student's question carefully and provide a concise, point-to-point answer strictly within 2 to 3 lines.
-3. Do not write long paragraphs or verbose explanations.
+2. Provide the FULL, COMPLETE answer with all essential academic facts (course codes, syllabus topics, schedules, credits, or faculty advice). Never give partial or half answers.
+3. Format the response cleanly in about 3 to 4 compact, professional lines or bullet points without long multi-page essays.
 """
         messages = [
             {"role": "system", "content": lead_prompt},

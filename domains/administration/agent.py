@@ -154,14 +154,18 @@ class AdminAgent:
             return faq_match
 
         # Step 3: Personalized Fee/Hostel Inquiry via DB + LLM
+        fee_data = fetch_fee_data(reg_no)
+        fee_snippet = f"\nLIVE STUDENT FINANCIAL & HOSTEL RECORDS:\n{json.dumps(fee_data.get('record', {}), indent=2)}\n" if fee_data.get("success") else ""
 
         system_prompt = (
             f"You are the University Administration Agent.\n"
             f"Student: {name} (Registration No: {reg_no}).\n"
+            f"{fee_snippet}\n"
             f"Instructions:\n"
-            f"1. Invoke 'lookup_student_fee' with registration_number='{reg_no}'.\n"
-            f"2. Read the student's question carefully and provide a direct, point-to-point answer within 2 to 3 lines. Do not write long paragraphs.\n"
-            f"3. Never ask for credentials or registration number."
+            f"1. Provide the FULL, COMPLETE answer with all essential financial and residential details (total fee, paid amount, pending balance, due date, payment status, scholarship waiver, hostel block, room number, warden name). Never give partial or half answers.\n"
+            f"2. Format the response cleanly in about 3 to 4 compact, structured lines or bullet points.\n"
+            f"3. Do not write long multi-page essays or verbose boilerplate. Maintain a professional, authoritative university tone.\n"
+            f"4. Never ask for credentials or registration number."
         )
 
         messages = [

@@ -181,10 +181,11 @@ STUDENT PROFILE:
 - Enrolled Courses: {', '.join(session.enrolled_courses)}
 {exam_data_snippet}
 Instructions:
-1. If the student asks about their exam schedule, seating hall, or grades, synthesize the answer directly from the LIVE RECORDS above without calling extra tools.
-2. Read the student's question carefully and provide a concise, point-to-point answer within 2 to 3 lines.
-3. Do not write long paragraphs or unnecessary filler.
-4. Cite the official university grading scale or database record when reporting grades or schedules.
+1. Provide the FULL, COMPLETE answer with all essential details (e.g., all scheduled courses, exam types, dates, times, venues, room numbers, desks, invigilators, or complete grade bands). Never give partial or half answers.
+2. Format the response cleanly in about 3 to 4 compact, structured lines, bullet points, or a neat table.
+3. Do not write long multi-page essays or verbose boilerplate. Deliver all required facts in a direct, professional manner.
+4. If the student asks about their exam schedule, seating hall, or grades, synthesize directly from the LIVE RECORDS above.
+5. Cite the official university grading scale or database record where applicable.
 """
         messages = [
             {"role": "system", "content": system_prompt},

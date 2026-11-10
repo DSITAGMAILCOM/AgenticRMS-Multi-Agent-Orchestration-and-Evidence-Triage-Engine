@@ -51,8 +51,8 @@ class FacultyAgent:
                 "content": f"You are the Dean/Lead Agent for {self.faculty_name}. "
                            f"Manage inquiries across departments: {dept_options}. "
                            f"Use `search_department_syllabus` for course outlines and `query_course_database` for class schedules. "
-                           f"Read the student's question carefully and provide a concise, point-to-point answer within 2 to 3 lines. "
-                           f"Do not write long paragraphs."
+                           f"Provide the FULL, COMPLETE answer with all essential details (course title, credits, room, instructor, syllabus modules). Never give partial or half answers. "
+                           f"Format the full response cleanly in about 3 to 4 compact lines or bullet points without long multi-page essays."
             },
             {"role": "user", "content": query}
         ]

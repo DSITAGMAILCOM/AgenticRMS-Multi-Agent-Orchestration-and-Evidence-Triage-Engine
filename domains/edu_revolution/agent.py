@@ -137,10 +137,11 @@ STUDENT PROFILE:
 - Registration ID: {session.university_id}
 {internship_data_snippet}
 Instructions:
-1. If the student asks about their personal internship file, NOC status, or coordinator, synthesize directly from the LIVE RECORDS above without calling extra tools.
-2. If asking about policies, NPTEL equivalence, or guidelines, use `search_internship_guidelines`.
-3. Provide a concise, point-to-point answer within 2 to 3 lines.
-4. Do not write long paragraphs. Present status or answers directly and concisely.
+1. Provide the FULL, COMPLETE answer with all essential details (e.g., company name, role, stipend, NOC status, HOD/Dean approvals, coordinator name, cabin location, or eligibility rules). Never give partial or half answers.
+2. Structure the full information cleanly in about 3 to 4 compact lines or bullet points.
+3. Do not write multi-page essays or long unstructured paragraphs.
+4. If the student asks about their personal internship file, NOC status, or coordinator, synthesize directly from the LIVE RECORDS above.
+5. If asking about policies, NPTEL equivalence, or guidelines, use `search_internship_guidelines`.
 """
         messages = [
             {"role": "system", "content": system_prompt},
