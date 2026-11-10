@@ -1870,7 +1870,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   function initSuggestionSlider() {
     const slider = document.getElementById('suggestionCardsSlider');
-    const dotsContainer = document.getElementById('sliderDots');
 
     if (!slider) return;
 
@@ -1898,26 +1897,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let suppressClick = false;
     let targetRotation = null;
     let animFrameId = null;
-
-    // Build Pagination Dots
-    if (dotsContainer) {
-      dotsContainer.innerHTML = '';
-      cards.forEach((card, index) => {
-        const dot = document.createElement('button');
-        dot.type = 'button';
-        dot.className = `slider-dot ${index === 0 ? 'active' : ''}`;
-        const title = card.querySelector('.card-title')?.textContent || `Card ${index + 1}`;
-        dot.setAttribute('aria-label', `Rotate to ${title}`);
-        dot.setAttribute('title', title);
-        dot.addEventListener('click', (e) => {
-          e.preventDefault();
-          rotateToIndex(index);
-        });
-        dotsContainer.appendChild(dot);
-      });
-    }
-
-    const dots = dotsContainer ? Array.from(dotsContainer.querySelectorAll('.slider-dot')) : [];
 
     function rotateToIndex(index) {
       const baseAngle = index * stepAngle;
@@ -1978,11 +1957,6 @@ document.addEventListener('DOMContentLoaded', () => {
         card.style.pointerEvents = pointerEvents;
         card.classList.toggle('is-active-center', isCenter);
         card.setAttribute('data-rel-angle', relAngle.toFixed(1));
-      });
-
-      // Update Pagination Dots
-      dots.forEach((dot, idx) => {
-        dot.classList.toggle('active', idx === activeIndex);
       });
     }
 
