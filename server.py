@@ -675,6 +675,46 @@ async def api_admin_tickets(request):
 
 
 
+def polish_human_committee_remark(raw_notes: str, committee_name: str = "Human Committee") -> str:
+    """
+    AI Polisher: Rewrites the human committee member's resolution note into an exceptionally
+    polite, respectful, and professional response, strictly preserving all factual content
+    and clearly attributing origin to the human committee member.
+    """
+    if not raw_notes or not raw_notes.strip():
+        return ""
+    if "[Official Human Resolution" in raw_notes:
+        return raw_notes
+
+    prompt = f"""You are a courteous, empathetic student support representative for the university.
+Rewrite the following human committee member's remark into an exceptionally polite, respectful, and professional tone.
+CRITICAL INSTRUCTIONS:
+1. Preserve every single factual detail, decision, date, course, or instruction from the original remark.
+2. Do not introduce any new information, assumptions, or promises.
+3. Express deep empathy, responsibility, and sincere apologies if an error or inconvenience occurred (e.g. "Dear student, we accept this responsibility and really apologise for the mistake. We have resolved your query.").
+4. Do NOT use em-dashes.
+5. Produce exactly one polished, warm, professional paragraph.
+
+HUMAN COMMITTEE REMARK:
+"{raw_notes.strip()}"
+"""
+    try:
+        from core.llm_client import client
+        from config import AGENT_MODEL
+        res = client.chat.completions.create(
+            model=AGENT_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2
+        )
+        polished = res.choices[0].message.content.strip()
+        polished = polished.replace("—", "-").replace("–", "-")
+    except Exception as e:
+        polished = f"Dear student, we accept this responsibility and really apologise for the mistake. We have resolved your query: {raw_notes.strip()}"
+
+    attribution = f"[Official Human Resolution — {committee_name.title() if committee_name else 'Human Committee'}]\n\n"
+    return f"{attribution}{polished}"
+
+
 async def api_admin_ticket_update(request):
     """
     Administrator Ticket Management & Stage Updating:
@@ -696,6 +736,11 @@ async def api_admin_ticket_update(request):
         assigned_officer = data.get("assigned_officer", "").strip()
         estimated_resolution = data.get("estimated_resolution", "").strip()
         human_resolution_notes = data.get("human_resolution_notes", "").strip()
+
+        # Transform human committee remark into ultra-polite student-facing note with clear attribution
+        if human_resolution_notes:
+            comm_name = assigned_officer or admin.get("department") or "Human Committee"
+            human_resolution_notes = polish_human_committee_remark(human_resolution_notes, comm_name)
 
         if not ticket_id:
             return JSONResponse({"success": False, "error": "Ticket ID is required."}, status_code=400)

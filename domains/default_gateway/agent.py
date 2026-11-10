@@ -66,24 +66,35 @@ class DefaultGatewayAgent:
         return match_faq(query, GATEWAY_FAQS)
 
     def classify_escalation_domain(self, query: str, reason: str = "") -> str:
-        """Determines if the escalated query requires Academic or Administrative portal resolution."""
+        """
+        AI Classifier: Categorizes student query into one of three human committees:
+        1. 'academic': Exam schedule clashes, course enrollment, grading, curriculum
+        2. 'resolution': Grievance redressal, grading dispute appeals, procedural errors
+        3. 'administrative': Fees, financial holds, hostel allotment, transport, fines
+        """
         combined = f"{query} {reason}".lower()
+        resolution_keywords = [
+            "grievance", "dispute", "complain", "complaint", "unfair", "appeal",
+            "harass", "emergency", "mistake", "wrong record", "disciplinary",
+            "re-evaluation appeal", "redressal", "ombudsman"
+        ]
         academic_keywords = [
             "clash", "conflict", "exam", "datesheet", "syllabus", "course", "subject",
             "elective", "credits", "curriculum", "grade", "marks", "teacher", "evaluator",
-            "timetable", "schedule overlap"
+            "timetable", "schedule overlap", "practical", "backlog"
         ]
         admin_keywords = [
             "fee", "fees", "dues", "challan", "payment", "hostel", "room", "warden",
-            "scholarship", "fine", "transport", "bus", "curfew", "admit card hold"
+            "scholarship", "fine", "transport", "bus", "curfew", "admit card hold", "mess"
         ]
         
-        # Check explicit keywords
+        if any(w in combined for w in resolution_keywords):
+            return "resolution"
         if any(w in combined for w in academic_keywords):
             return "academic"
         if any(w in combined for w in admin_keywords):
             return "administrative"
-        return "academic"  # Default to academic for exam/curriculum related inquiries
+        return "academic"
 
     def escalate(
         self,
@@ -95,36 +106,42 @@ class DefaultGatewayAgent:
         start_time: Optional[float] = None
     ) -> str:
         """
-        Escalates an exam clash or unresolved inquiry to the Default Gateway:
-        - Creates a formal gateway ticket.
-        - Classifies as Academic vs Administrative.
-        - Provisions credentials in admin.db for the target portal officer.
-        - Routes query to the designated portal.
-        - Emits structured output across Edu Revolution, Examination, Default Gateway, and Central Admin Log.
-        - Records the test log in the Central Admin Portal database.
+        Escalates query to Default Gateway with 3-category AI classification:
+        - Classifies as academic, resolution, or administrative.
+        - Provisions credentials in admin.db for the corresponding human committee member.
+        - Records ticket in helpdesk_tickets in university.db with committee attribution.
+        - Returns concise 8-line table formatted for student portal.
         """
         t0 = start_time or time.time()
         ticket_id = f"CLASH-{datetime.datetime.now().year}-{random.randint(1000, 9999)}" if clash_info else f"TKT-{datetime.datetime.now().year}-{random.randint(1000, 9999)}"
         portal_category = self.classify_escalation_domain(query, reason)
 
+        committee_metadata = {
+            "academic": ("Academic Committee", "Timetable & Examination Committee", "Academic Committee Portal"),
+            "resolution": ("Grievance Resolution Committee", "Central Dispute & Redressal Committee", "Resolution Committee Portal"),
+            "administrative": ("Administrative Committee", "Student Welfare & Hostel Administration", "Administrative Committee Portal")
+        }
+        committee_name, committee_dept, target_portal_name = committee_metadata.get(
+            portal_category,
+            ("Academic Committee", "Timetable & Examination Committee", "Academic Committee Portal")
+        )
+
         tracker.log_hop(
             from_agent=tracker.current_agent or "Controller of Examinations",
             to_agent="Default Human Gateway",
             action_type="CLASH_ESCALATION" if clash_info else "ESCALATION",
-            payload={"reason": reason, "category": portal_category},
-            output=f"Created support ticket {ticket_id} for {portal_category} portal."
+            payload={"reason": reason, "category": portal_category, "committee": committee_name},
+            output=f"Created support ticket {ticket_id} forwarded to {committee_name}."
         )
 
         # Step 1: Provision Portal Credentials in admin.db
         credentials = create_portal_credentials(
             portal_type=portal_category,
-            department="Timetable & Examination Committee" if portal_category == "academic" else "Central Administration",
+            department=committee_dept,
             assigned_ticket_id=ticket_id
         )
 
-        target_portal_name = "Academic Portal" if portal_category == "academic" else "Administrator Portal"
-        target_portal_url = "/portal/academic" if portal_category == "academic" else "/portal/admin"
-
+        target_portal_url = f"/portal/{portal_category}"
         trajectory_str = " ➔ ".join([h["from_agent"] for h in tracker.hops] + ["Default Human Gateway", target_portal_name])
 
         # Step 2: Insert into helpdesk_tickets in university.db
@@ -134,13 +151,15 @@ class DefaultGatewayAgent:
             cursor.execute("""
                 INSERT INTO helpdesk_tickets (
                     ticket_id, university_id, student_name, university_email,
-                    department_id, query_text, escalation_reason, category, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ESCALATED')
+                    department_id, query_text, escalation_reason, category, status,
+                    assigned_officer
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ESCALATED', ?)
             """, (
                 ticket_id, session.university_id, session.full_name, session.university_email,
                 session.department_id, f"{query}\n\n[ROUTING TRAJECTORY]:\n{trajectory_str}\n[CREDENTIALS PROVISIONED]:\n{credentials['username']} ({credentials['role']})",
                 f"{reason} (Linked Audit ID: {tracker.query_id})",
-                f"{portal_category.title()} Gateway"
+                f"{portal_category.title()} Gateway",
+                committee_name
             ))
             conn.commit()
             conn.close()

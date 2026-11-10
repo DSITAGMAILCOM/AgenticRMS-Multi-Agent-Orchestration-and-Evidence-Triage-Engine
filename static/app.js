@@ -414,6 +414,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     vtCurrentStageName.textContent = activeTicket.current_stage || activeTicket.assigned_officer || 'Hostel Office';
     vtNextStageName.textContent = activeTicket.next_stage || 'Dean (Hostel Affairs)';
+
+    // Render Official Human Committee Resolution Notes with Attribution
+    const rmsHumanResolutionCard = document.getElementById('rmsHumanResolutionCard');
+    const resOfficerAttribution = document.getElementById('resOfficerAttribution');
+    const resNotesText = document.getElementById('resNotesText');
+
+    if (rmsHumanResolutionCard && resNotesText) {
+      if (activeTicket.human_resolution_notes && activeTicket.human_resolution_notes.trim()) {
+        rmsHumanResolutionCard.classList.remove('hidden');
+        if (resOfficerAttribution) {
+          resOfficerAttribution.textContent = activeTicket.assigned_officer || 'Human Committee';
+        }
+        resNotesText.textContent = activeTicket.human_resolution_notes;
+      } else {
+        rmsHumanResolutionCard.classList.add('hidden');
+      }
+    }
   }
 
   function renderStepper(ticket) {

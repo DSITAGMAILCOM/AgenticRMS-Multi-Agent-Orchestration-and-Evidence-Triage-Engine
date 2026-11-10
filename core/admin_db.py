@@ -360,28 +360,42 @@ def create_portal_credentials(
     cursor = conn.cursor()
 
     suffix = secrets.token_hex(2)
-    is_academic = portal_type.lower() in ["academic", "teacher", "evaluator", "curriculum"]
+    ptype = portal_type.lower()
+    is_academic = ptype in ["academic", "teacher", "evaluator", "curriculum"]
+    is_resolution = ptype in ["resolution", "grievance", "dispute", "redressal"]
 
     if is_academic:
         admin_id = f"ACAD-{secrets.token_hex(3).upper()}"
-        username = f"acad_teacher_{suffix}"
-        email = f"teacher_{suffix}@faculty.lpu.in"
-        role = "AcademicTeacher"
-        name = full_name or "Academic Evaluation Officer"
-        dept = department or "Academic Affairs & Timetable Coordination"
-        target_portal = "Academic Portal (/portal/academic)"
+        username = f"acad_member_{suffix}"
+        email = f"academic_{suffix}@faculty.lpu.in"
+        role = "AcademicCommitteeMember"
+        name = full_name or "Academic Committee Member"
+        dept = department or "Academic Affairs & Timetable Committee"
+        target_portal = "Academic Committee Portal (/portal/academic)"
         portal_key = "ACADEMIC_PORTAL"
+        pwd_prefix = "Acad"
+    elif is_resolution:
+        admin_id = f"RES-{secrets.token_hex(3).upper()}"
+        username = f"res_member_{suffix}"
+        email = f"resolution_{suffix}@grievance.lpu.in"
+        role = "ResolutionCommitteeMember"
+        name = full_name or "Grievance Resolution Officer"
+        dept = department or "Central Dispute & Redressal Committee"
+        target_portal = "Resolution Committee Portal (/portal/resolution)"
+        portal_key = "RESOLUTION_PORTAL"
+        pwd_prefix = "Resolve"
     else:
         admin_id = f"ADM-{secrets.token_hex(3).upper()}"
         username = f"admin_officer_{suffix}"
         email = f"officer_{suffix}@admin.lpu.in"
-        role = "Administrator"
-        name = full_name or "Administrative Service Officer"
+        role = "AdministrativeOfficer"
+        name = full_name or "Administrative Committee Member"
         dept = department or "Central Administration & Helpdesk"
-        target_portal = "Administrator Portal (/portal/admin)"
+        target_portal = "Administrative Committee Portal (/portal/admin)"
         portal_key = "ADMINISTRATIVE_PORTAL"
+        pwd_prefix = "Admin"
 
-    raw_password = f"{'Acad' if is_academic else 'Admin'}@RMS2026_{suffix}!"
+    raw_password = f"{pwd_prefix}@RMS2026_{suffix}!"
     p_hash, salt = hash_password(raw_password)
 
     cursor.execute("""
